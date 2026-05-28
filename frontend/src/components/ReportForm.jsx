@@ -101,75 +101,44 @@ export default function ReportForm({ onSave }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={s.form}>
-      <h2 style={s.title}>Nuevo Reporte Vial</h2>
+    <form onSubmit={handleSubmit} className="pw-form">
+      <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px", color: "#1a1a2e" }}>Nuevo Reporte Vial</h2>
 
-      <div style={s.block}>
-        <h3 style={s.blockTitle}>Chofer / Empresa</h3>
-        <input placeholder="ID del Chofer *" value={form.chofer_id} onChange={set("chofer_id")} style={s.input} />
-        <div style={s.row}>
-          <input placeholder="Empresa minera" value={form.empresa_minera} onChange={set("empresa_minera")} style={{ ...s.input, flex: 1 }} />
-          <input placeholder="Patente" value={form.patente_camion} onChange={set("patente_camion")} style={{ ...s.input, flex: 1 }} />
+      <div className="pw-block">
+        <h3 className="pw-block-title">Chofer / Empresa</h3>
+        <input className="pw-input" placeholder="ID del Chofer *" value={form.chofer_id} onChange={set("chofer_id")} />
+        <div className="pw-row" style={{ flexWrap: "wrap" }}>
+          <input className="pw-input" placeholder="Empresa minera" value={form.empresa_minera} onChange={set("empresa_minera")} style={{ flex: "1 1 140px" }} />
+          <input className="pw-input" placeholder="Patente" value={form.patente_camion} onChange={set("patente_camion")} style={{ flex: "1 1 120px" }} />
         </div>
       </div>
 
-      <div style={s.block}>
-        <h3 style={s.blockTitle}>Ubicación</h3>
-        <div style={s.row}>
-          <input placeholder="Latitud" value={form.latitud} onChange={set("latitud")} style={{ ...s.input, flex: 1 }} />
-          <input placeholder="Longitud" value={form.longitud} onChange={set("longitud")} style={{ ...s.input, flex: 1 }} />
+      <div className="pw-block">
+        <h3 className="pw-block-title">Ubicación</h3>
+        <div className="pw-row" style={{ flexWrap: "wrap" }}>
+          <input className="pw-input" placeholder="Latitud" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
+          <input className="pw-input" placeholder="Longitud" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
         </div>
-        <div style={s.row}>
-          <button type="button" onClick={getLocation} style={s.btnSecondary}>
+        <div className="pw-row" style={{ flexWrap: "wrap" }}>
+          <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "1 1 160px" }}>
             {geoStatus || "Obtener GPS"}
           </button>
-          <input placeholder="Km" value={form.kilometro} onChange={set("kilometro")} type="number" style={{ ...s.input, width: 80 }} />
+          <input className="pw-input" placeholder="Km" value={form.kilometro} onChange={set("kilometro")} type="number" style={{ flex: "0 1 100px" }} />
         </div>
       </div>
 
-      <div style={s.block}>
-        <h3 style={s.blockTitle}>Incidente</h3>
-        <select value={form.tipo_incidente} onChange={set("tipo_incidente")} style={s.input}>
+      <div className="pw-block">
+        <h3 className="pw-block-title">Incidente</h3>
+        <select className="pw-input" value={form.tipo_incidente} onChange={set("tipo_incidente")}>
           <option value="">Tipo de incidente *</option>
           {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <textarea placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} style={s.input} />
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={s.input} />
-        {photo && <img src={photo} alt="preview" style={s.preview} />}
+        <textarea className="pw-input" placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} />
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
+        {photo && <img src={photo} alt="preview" className="pw-preview" />}
       </div>
 
-      <button type="submit" style={s.btnPrimary}>Guardar Localmente</button>
+      <button type="submit" className="pw-btn-primary">Guardar Localmente</button>
     </form>
   );
 }
-
-const s = {
-  form: {
-    display: "flex", flexDirection: "column", gap: 12,
-    background: "#fff", padding: 20, borderRadius: 12,
-    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-  },
-  title: { fontSize: 18, fontWeight: 700, margin: "0 0 4px", color: "#1a1a2e" },
-  block: {
-    display: "flex", flexDirection: "column", gap: 8,
-    padding: 12, background: "#f8f9fa", borderRadius: 8,
-  },
-  blockTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "#495057", textTransform: "uppercase", letterSpacing: 0.5 },
-  row: { display: "flex", gap: 8 },
-  input: {
-    padding: "8px 10px", fontSize: 14, border: "1px solid #dee2e6",
-    borderRadius: 6, outline: "none", boxSizing: "border-box",
-    fontFamily: "inherit",
-  },
-  btnSecondary: {
-    padding: "8px 14px", background: "#e9ecef", border: "1px solid #ced4da",
-    borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 500,
-    fontFamily: "inherit",
-  },
-  btnPrimary: {
-    padding: "12px 16px", background: "linear-gradient(135deg, #4361ee, #3a0ca3)",
-    color: "#fff", border: "none", borderRadius: 8, cursor: "pointer",
-    fontWeight: 600, fontSize: 15, fontFamily: "inherit",
-  },
-  preview: { width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 6 },
-};
