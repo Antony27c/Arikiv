@@ -15,8 +15,8 @@ const statusColors = {
 
 export default function NewsFeed({ synced, pending }) {
   const realItems = synced.map(s => ({ ...s, _sample: false }));
-  const sampleItems = synced.length === 0 ? sampleNews.map(s => ({ ...s, _sample: true })) : [];
-  const all = [...sampleItems, ...realItems].reverse();
+  const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
+  const all = [...realItems, ...sampleItems].reverse();
 
   return (
     <div>
