@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report
@@ -104,6 +107,14 @@ def submit_report(report: Report):
         arkiv=ArkivResult(**arkiv),
         message="Reporte auditado y almacenado en ARKIV." if arkiv["stored"]
                 else "Reporte auditado (almacenamiento pendiente).",
+    )
+
+@app.exception_handler(Exception)
+def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled error: %s", str(exc), exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Error interno: {str(exc)}"},
     )
 
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
