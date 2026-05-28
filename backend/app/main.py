@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -47,9 +49,21 @@ class ReportResponse(BaseModel):
     arkiv: ArkivResult
     message: str
 
-@app.get("/")
+@app.get("/api/health")
 def health():
     return {"status": "ok", "service": "punapulse-api"}
+
+@app.get("/")
+def index():
+    return FileResponse("static/index.html")
+
+@app.get("/favicon.svg")
+def favicon():
+    return FileResponse("static/favicon.svg")
+
+@app.get("/icons.svg")
+def icons():
+    return FileResponse("static/icons.svg")
 
 @app.post("/api/reports", response_model=ReportResponse)
 def submit_report(report: Report):
@@ -66,3 +80,9 @@ def submit_report(report: Report):
         message="Reporte auditado y almacenado en ARKIV." if arkiv["stored"]
                 else "Reporte auditado (almacenamiento pendiente).",
     )
+
+app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+@app.exception_handler(404)
+def spa_fallback(request, exc):
+    return FileResponse("static/index.html")

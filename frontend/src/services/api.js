@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BASE = import.meta.env.VITE_BACKEND_URL || "";
 
 export async function submitReport(data) {
   const res = await fetch(`${BASE}/api/reports`, {
