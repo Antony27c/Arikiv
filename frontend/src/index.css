@@ -188,3 +188,14 @@ input:focus, select:focus, textarea:focus {
     padding: 24px;
   }
 }
+
+.pw-nav-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.pw-nav-active span {
+  color: #4361ee !important;
+}
