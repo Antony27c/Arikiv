@@ -108,6 +108,7 @@ def store_report(report, audit):
             "entity_key": "0xERR",
             "tx_hash": "0xERR",
             "stored": False,
+            "simulated": False,
             "error": str(e),
         }
 
