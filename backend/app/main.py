@@ -18,18 +18,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Photo(BaseModel):
+class Coordenadas(BaseModel):
+    latitud: float
+    longitud: float
+
+class Geolocalizacion(BaseModel):
+    ruta: str = "Ruta Nacional 51"
+    kilometro: Optional[int] = None
+    coordenadas: Coordenadas
+
+class Foto(BaseModel):
     filename: str
     data: str
 
+class DatosEvento(BaseModel):
+    tipo_incidente: str
+    descripcion_chofer: str
+    imagen_hash_sha256: Optional[str] = None
+    fotos: list[Foto] = []
+
+class MetadataOrigen(BaseModel):
+    chofer_id: str
+    empresa_minera: Optional[str] = None
+    patente_camion: Optional[str] = None
+    timestamp_offline: str
+
 class Report(BaseModel):
-    latitude: float
-    longitude: float
-    description: str
-    timestamp: str
-    driver_id: str
-    device_id: Optional[str] = None
-    photos: list[Photo] = []
+    reporte_id: Optional[str] = None
+    metadata_origen: MetadataOrigen
+    geolocalizacion_reportada: Geolocalizacion
+    datos_evento: DatosEvento
+
+class AuditResult(BaseModel):
+    agente_id: str
+    status_verificacion: str
+    score_confianza_geografica: float
+    resumen_tecnico_ia: str
+    clasificacion_urgencia_ia: str
+    analisis_coherencia: str
+    passed: bool
+    flags: list[str]
 
 class ArkivResult(BaseModel):
     entity_key: str
@@ -37,15 +65,10 @@ class ArkivResult(BaseModel):
     stored: bool
     simulated: bool
 
-class AuditResult(BaseModel):
-    trust_score: int
-    passed: bool
-    flags: list[str]
-
 class ReportResponse(BaseModel):
     status: str
-    report_id: str
-    audit: AuditResult
+    reporte_id: str
+    validacion_ia: AuditResult
     arkiv: ArkivResult
     message: str
 
@@ -67,15 +90,16 @@ def icons():
 
 @app.post("/api/reports", response_model=ReportResponse)
 def submit_report(report: Report):
-    report_id = f"RP-{int(datetime.now().timestamp())}"
+    reporte_id = report.reporte_id or f"RP-{int(datetime.now().timestamp())}"
     data = report.model_dump()
     audit = audit_report(data)
+
     arkiv = store_report(data, audit)
 
     return ReportResponse(
-        status="audited" if audit["passed"] else "flagged",
-        report_id=report_id,
-        audit=AuditResult(**audit),
+        status=audit["status_verificacion"].lower(),
+        reporte_id=reporte_id,
+        validacion_ia=AuditResult(**audit),
         arkiv=ArkivResult(**arkiv),
         message="Reporte auditado y almacenado en ARKIV." if arkiv["stored"]
                 else "Reporte auditado (almacenamiento pendiente).",

@@ -45,15 +45,12 @@ export function useOfflineSync() {
 
     for (const item of queue) {
       try {
-        const result = await submitReport({
-          latitude: item.latitude,
-          longitude: item.longitude,
-          description: item.description,
-          timestamp: item.timestamp,
-          driver_id: item.driver_id,
-          device_id: item.device_id,
-          photos: item.photos || [],
-        });
+        const payload = {
+          metadata_origen: item.metadata_origen,
+          geolocalizacion_reportada: item.geolocalizacion_reportada,
+          datos_evento: item.datos_evento,
+        };
+        const result = await submitReport(payload);
         success.push({ ...item, _result: result });
       } catch {
         break;
@@ -69,7 +66,7 @@ export function useOfflineSync() {
     if (online && pending.length > 0 && !syncing) {
       sync();
     }
-  }, [online, pending.length]);
+  }, [online, pending.length, sync]);
 
   return { pending, synced, online, syncing, enqueue, sync };
 }

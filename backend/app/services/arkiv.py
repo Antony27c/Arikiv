@@ -12,30 +12,51 @@ ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
 PROJECT_NAME = "punapulse"
 
 def _build_payload(report: dict, audit: dict) -> str:
+    meta = report.get("metadata_origen", {})
+    geo = report.get("geolocalizacion_reportada", {})
+    evento = report.get("datos_evento", {})
+
     return json.dumps({
         "project": PROJECT_NAME,
         "type": "road_audit",
         "report": {
-            "driver_id": report["driver_id"],
-            "latitude": report["latitude"],
-            "longitude": report["longitude"],
-            "description": report.get("description", ""),
-            "timestamp": report.get("timestamp", ""),
-            "photo_count": len(report.get("photos", [])),
+            "reporte_id": report.get("reporte_id", ""),
+            "metadata_origen": {
+                "chofer_id": meta.get("chofer_id", ""),
+                "empresa_minera": meta.get("empresa_minera", ""),
+                "patente_camion": meta.get("patente_camion", ""),
+                "timestamp_offline": meta.get("timestamp_offline", ""),
+            },
+            "geolocalizacion_reportada": {
+                "ruta": geo.get("ruta", "Ruta Nacional 51"),
+                "kilometro": geo.get("kilometro"),
+                "coordenadas": {
+                    "latitud": geo.get("coordenadas", {}).get("latitud", 0),
+                    "longitud": geo.get("coordenadas", {}).get("longitud", 0),
+                },
+            },
+            "datos_evento": {
+                "tipo_incidente": evento.get("tipo_incidente", ""),
+                "descripcion_chofer": evento.get("descripcion_chofer", ""),
+                "imagen_hash_sha256": evento.get("imagen_hash_sha256", ""),
+            },
         },
-        "audit": {
-            "trust_score": audit["trust_score"],
-            "passed": audit["passed"],
-            "flags": audit["flags"],
+        "validacion_ia": {
+            "agente_id": audit.get("agente_id", ""),
+            "status_verificacion": audit.get("status_verificacion", ""),
+            "score_confianza_geografica": audit.get("score_confianza_geografica", 0.0),
+            "resumen_tecnico_ia": audit.get("resumen_tecnico_ia", ""),
+            "clasificacion_urgencia_ia": audit.get("clasificacion_urgencia_ia", ""),
+            "analisis_coherencia": audit.get("analisis_coherencia", ""),
         },
-        "device_id": report.get("device_id", ""),
     }, ensure_ascii=False)
 
 def store_report(report: dict, audit: dict) -> dict:
     payload = _build_payload(report, audit)
 
     if not ARKIV_PRIVATE_KEY:
-        entity_key = f"0xSIM_{report.get('driver_id','')}_{int(__import__('time').time())}"
+        meta = report.get("metadata_origen", {})
+        entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(__import__('time').time())}"
         logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
         return {
             "entity_key": entity_key,
