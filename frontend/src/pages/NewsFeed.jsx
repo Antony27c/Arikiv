@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { getReports } from "../services/api";
 import sampleNews from "../data/sampleNews";
 
 const urgencyColors = {
@@ -13,10 +15,41 @@ const statusColors = {
   flagged: "#f77f00",
 };
 
+function parseArkivReport(entry) {
+  let payload = {};
+  try {
+    payload = JSON.parse(entry.payload || "{}");
+  } catch {}
+  const txHash = entry.key || "0xARKIV";
+  return {
+    _id: txHash,
+    _result: {
+      status: payload.validacion_ia?.status_verificacion?.toLowerCase() || "aprobado",
+      validacion_ia: payload.validacion_ia || {},
+      arkiv: { tx_hash: txHash, simulated: false, stored: true },
+    },
+    metadata_origen: payload.metadata_origen || {},
+    geolocalizacion_reportada: payload.geolocalizacion_reportada || {},
+    datos_evento: payload.datos_evento || {},
+    _sample: false,
+  };
+}
+
 export default function NewsFeed({ synced, pending }) {
+  const [arkivReports, setArkivReports] = useState([]);
+
+  useEffect(() => {
+    getReports().then((res) => {
+      setArkivReports(res.reports || []);
+    }).catch(() => {});
+  }, []);
+
   const realItems = synced.map(s => ({ ...s, _sample: false }));
+  const arkivItems = arkivReports.filter(
+    r => !realItems.some(l => l._result?.arkiv?.tx_hash === r.key)
+  ).map(r => parseArkivReport(r));
   const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
-  const all = [...realItems, ...sampleItems].reverse();
+  const all = [...arkivItems, ...realItems, ...sampleItems];
 
   return (
     <div>

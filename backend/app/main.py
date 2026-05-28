@@ -10,7 +10,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 from app.services.ai_audit import audit_report
-from app.services.arkiv import store_report
+from app.services.arkiv import store_report, query_reports
 
 app = FastAPI(title="RutaSegura API", version="0.1.0")
 
@@ -75,6 +75,11 @@ class ReportResponse(BaseModel):
     validacion_ia: AuditResult
     arkiv: ArkivResult
     message: str
+
+@app.get("/api/reports")
+def list_reports(tipo: Optional[str] = None, limit: int = 50):
+    data = query_reports(tipo=tipo, limit=limit)
+    return {"reports": data, "count": len(data)}
 
 @app.get("/api/health")
 def health():

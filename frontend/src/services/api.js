@@ -1,5 +1,13 @@
 const BASE = import.meta.env.VITE_BACKEND_URL || "";
 
+export async function getReports(tipo = "", limit = 50) {
+  const params = new URLSearchParams({ limit });
+  if (tipo) params.set("tipo", tipo);
+  const res = await fetch(`${BASE}/api/reports?${params}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 export async function submitReport(data) {
   const res = await fetch(`${BASE}/api/reports`, {
     method: "POST",
