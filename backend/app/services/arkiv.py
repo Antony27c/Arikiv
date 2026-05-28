@@ -53,66 +53,32 @@ def _build_payload(report, audit):
         },
     }, ensure_ascii=False)
 
-def _attributes(report, audit):
-    meta = report.get("metadata_origen", {})
-    evento = report.get("datos_evento", {})
-    geo = report.get("geolocalizacion_reportada", {})
-    v = audit or {}
-
-    return [
-        PROJECT_ATTRIBUTE,
-        {"key": "type", "value": "road_incident"},
-        {"key": "chofer_id", "value": meta.get("chofer_id", "")},
-        {"key": "tipo_incidente", "value": evento.get("tipo_incidente", "")},
-        {"key": "clasificacion_urgencia", "value": v.get("clasificacion_urgencia_ia", "")},
-        {"key": "status_verificacion", "value": v.get("status_verificacion", "")},
-        {"key": "kilometro", "value": geo.get("kilometro", 0)},
-        {"key": "timestamp", "value": int(time.time())},
-    ]
-
 def store_report(report, audit):
-    payload_str = _build_payload(report, audit)
-    attrs = _attributes(report, audit)
-
-    if not ARKIV_PRIVATE_KEY:
-        meta = report.get("metadata_origen", {})
-        entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
-        logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
-        return {
-            "entity_key": entity_key,
-            "tx_hash": "0xSIM",
-            "stored": False,
-            "simulated": True,
-        }
-
     try:
+        payload_str = _build_payload(report, audit)
+
+        if not ARKIV_PRIVATE_KEY:
+            meta = report.get("metadata_origen", {})
+            entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
+            logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
+            return {
+                "entity_key": entity_key,
+                "tx_hash": "0xSIM",
+                "stored": False,
+                "simulated": True,
+            }
+
         from web3 import Web3
         from eth_account import Account
 
         w3 = Web3(Web3.HTTPProvider(ARKIV_RPC))
         account = Account.from_key(ARKIV_PRIVATE_KEY)
 
-        expires_in = 30 * 24 * 3600
-
-        payload_bytes = w3.to_bytes(text=payload_str)
-        content_type_bytes = w3.to_bytes(text="application/json")
-
-        attrs_string = json.dumps(attrs, ensure_ascii=False)
-        attrs_bytes = w3.to_bytes(text=attrs_string)
-
-        data_hex = (
-            w3.to_bytes(hexstr="0x00").hex()
-            + w3.to_bytes(payload_bytes).hex()
-            + w3.to_bytes(content_type_bytes).hex()
-            + w3.to_bytes(attrs_bytes).hex()
-            + w3.to_bytes(expires_in).hex()
-        )
-
         tx = {
             "to": ARKIV_ADDRESS,
             "from": account.address,
             "value": 0,
-            "data": data_hex,
+            "data": w3.to_bytes(text=payload_str).hex(),
             "chainId": CHAIN_ID,
         }
 
