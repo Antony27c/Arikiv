@@ -63,6 +63,7 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    a = min(a, 1.0)
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 def _classify_urgency(desc):
