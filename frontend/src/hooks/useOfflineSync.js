@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { submitReport } from "../services/api";
 
-const STORAGE_KEY = "punapulse_pending";
+const STORAGE_KEY = "rutasegura_pending";
 
 function loadQueue() {
   try {

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 ARKIV_RPC = os.getenv("ARKIV_RPC_URL", "https://braga.hoodi.arkiv.network/rpc")
 ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
 
-PROJECT_ATTRIBUTE = {"key": "project", "value": "punapulse-rn51"}
+PROJECT_ATTRIBUTE = {"key": "project", "value": "rutasegura-rn51"}
 
 ARKIV_ADDRESS = "0x000000000000000000000000000000000061726976"
 CHAIN_ID = 60138453102

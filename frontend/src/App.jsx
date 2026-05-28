@@ -10,7 +10,7 @@ function AppContent() {
     <div className="pw-wrapper" style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", background: "#f0f2f5", display: "flex", flexDirection: "column" }}>
       <header className="pw-header">
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, marginBottom: 4 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: -0.5 }}>PunaPulse</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: -0.5 }}>RutaSegura</h1>
           <span style={{
             fontSize: 11, padding: "2px 10px", borderRadius: 20, fontWeight: 600,
             textTransform: "uppercase", letterSpacing: 0.5,

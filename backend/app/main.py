@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report
 
-app = FastAPI(title="PunaPulse API", version="0.1.0")
+app = FastAPI(title="RutaSegura API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,7 +78,7 @@ class ReportResponse(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "punapulse-api"}
+    return {"status": "ok", "service": "rutasegura-api"}
 
 @app.get("/")
 def index():

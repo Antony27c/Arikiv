@@ -1,4 +1,4 @@
-# PunaPulse
+# RutaSegura
 
 Auditoría vial inmutable para la Ruta Nacional 51 (Salta, Argentina) — Eje del Litio.
 

@@ -1,6 +1,6 @@
 # Especificación del Agente de IA: Arkiv-Miner-Audit
 
-Este documento define el rol, las tareas de procesamiento y las reglas de validación del Agente de IA integrado en el backend de Python para el proyecto **PunaPulse** (Track ARKIV - Hackathon Puna Tech).
+Este documento define el rol, las tareas de procesamiento y las reglas de validación del Agente de IA integrado en el backend de Python para el proyecto **RutaSegura** (Track ARKIV - Hackathon Puna Tech).
 
 ## Objetivo General
 
