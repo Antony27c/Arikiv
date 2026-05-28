@@ -41,7 +41,7 @@ export function useOfflineSync() {
     if (pending.length === 0 || !online) return;
     setSyncing(true);
     const queue = [...pending];
-    const success = [];
+    const done = [];
 
     for (const item of queue) {
       try {
@@ -51,14 +51,14 @@ export function useOfflineSync() {
           datos_evento: item.datos_evento,
         };
         const result = await submitReport(payload);
-        success.push({ ...item, _result: result });
+        done.push({ ...item, _result: result, _error: false });
       } catch {
-        break;
+        done.push({ ...item, _error: true });
       }
     }
 
-    setPending((prev) => prev.filter((p) => !success.find((s) => s._id === p._id)));
-    setSynced((prev) => [...prev, ...success]);
+    setPending([]);
+    setSynced((prev) => [...prev, ...done]);
     setSyncing(false);
   }, [pending, online]);
 

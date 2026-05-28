@@ -64,6 +64,7 @@ class ArkivResult(BaseModel):
     tx_hash: str
     stored: bool
     simulated: bool
+    error: Optional[str] = None
 
 class ReportResponse(BaseModel):
     status: str
