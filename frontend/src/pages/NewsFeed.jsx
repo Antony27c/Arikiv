@@ -16,16 +16,14 @@ const statusColors = {
 };
 
 function parseArkivReport(entry) {
-  let payload = {};
-  try {
-    payload = JSON.parse(entry.payload || "{}");
-  } catch {}
-  const txHash = entry.key || "0xARKIV";
+  const payload = entry.payload || {};
+  const audit = entry.audit || {};
+  const txHash = entry.reporte_id || "0xARKIV";
   return {
     _id: txHash,
     _result: {
-      status: payload.validacion_ia?.status_verificacion?.toLowerCase() || "aprobado",
-      validacion_ia: payload.validacion_ia || {},
+      status: audit.status_verificacion?.toLowerCase() || "aprobado",
+      validacion_ia: audit,
       arkiv: { tx_hash: txHash, simulated: false, stored: true },
     },
     metadata_origen: payload.metadata_origen || {},
@@ -46,7 +44,7 @@ export default function NewsFeed({ synced, pending }) {
 
   const realItems = synced.map(s => ({ ...s, _sample: false }));
   const arkivItems = arkivReports.filter(
-    r => !realItems.some(l => l._result?.arkiv?.tx_hash === r.key)
+    r => !realItems.some(l => l._result?.reporte_id === r.reporte_id)
   ).map(r => parseArkivReport(r));
   const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
   const all = [...arkivItems, ...realItems, ...sampleItems];

@@ -2,8 +2,9 @@ import json
 import os
 import time
 import logging
-import requests
 from dotenv import load_dotenv
+
+from app.services.db import save_report as db_save_report, list_reports as db_list_reports
 
 load_dotenv()
 
@@ -11,8 +12,6 @@ logger = logging.getLogger(__name__)
 
 ARKIV_RPC = os.getenv("ARKIV_RPC_URL", "https://braga.hoodi.arkiv.network/rpc")
 ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
-
-PROJECT_ATTRIBUTE = {"key": "project", "value": "rutasegura-rn51"}
 
 ARKIV_ADDRESS = "0x000000000000000000000000000000000061726976"
 CHAIN_ID = 60138453102
@@ -53,7 +52,11 @@ def _build_payload(report, audit):
         },
     }, ensure_ascii=False)
 
-def store_report(report, audit):
+def store_report(report, audit, reporte_id=None):
+    if not reporte_id:
+        reporte_id = report.get("reporte_id") or f"RP-{int(time.time())}"
+    result = {"reporte_id": reporte_id}
+
     try:
         payload_str = _build_payload(report, audit)
 
@@ -61,91 +64,60 @@ def store_report(report, audit):
             meta = report.get("metadata_origen", {})
             entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
             logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
-            return {
+            result.update({
                 "entity_key": entity_key,
                 "tx_hash": "0xSIM",
                 "stored": False,
                 "simulated": True,
+            })
+        else:
+            from web3 import Web3
+            from eth_account import Account
+
+            w3 = Web3(Web3.HTTPProvider(ARKIV_RPC))
+            account = Account.from_key(ARKIV_PRIVATE_KEY)
+
+            tx = {
+                "to": ARKIV_ADDRESS,
+                "from": account.address,
+                "value": 0,
+                "data": w3.to_bytes(text=payload_str).hex(),
+                "chainId": CHAIN_ID,
             }
 
-        from web3 import Web3
-        from eth_account import Account
+            gas = w3.eth.estimate_gas(tx)
+            tx["gas"] = gas
+            tx["gasPrice"] = w3.eth.gas_price
+            nonce = w3.eth.get_transaction_count(account.address)
+            tx["nonce"] = nonce
 
-        w3 = Web3(Web3.HTTPProvider(ARKIV_RPC))
-        account = Account.from_key(ARKIV_PRIVATE_KEY)
+            signed = account.sign_transaction(tx)
+            tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+            receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = {
-            "to": ARKIV_ADDRESS,
-            "from": account.address,
-            "value": 0,
-            "data": w3.to_bytes(text=payload_str).hex(),
-            "chainId": CHAIN_ID,
-        }
+            entity_key = f"0x{receipt['logs'][0]['data'].hex()}" if receipt.get("logs") else tx_hash.hex()
+            logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash.hex())
 
-        gas = w3.eth.estimate_gas(tx)
-        tx["gas"] = gas
-        tx["gasPrice"] = w3.eth.gas_price
-        nonce = w3.eth.get_transaction_count(account.address)
-        tx["nonce"] = nonce
-
-        signed = account.sign_transaction(tx)
-        tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
-        entity_key = f"0x{receipt['logs'][0]['data'].hex()}" if receipt.get("logs") else tx_hash.hex()
-        logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash.hex())
-
-        return {
-            "entity_key": entity_key,
-            "tx_hash": tx_hash.hex(),
-            "stored": True,
-            "simulated": False,
-        }
+            result.update({
+                "entity_key": entity_key,
+                "tx_hash": tx_hash.hex(),
+                "stored": True,
+                "simulated": False,
+            })
 
     except Exception as e:
         logger.error("ARKIV: error al almacenar — %s", str(e))
-        return {
+        result.update({
             "entity_key": "0xERR",
             "tx_hash": "0xERR",
             "stored": False,
             "simulated": False,
             "error": str(e),
-        }
+        })
 
-def query_reports(tipo=None, limit=20):
-    try:
-        conditions = [f'{PROJECT_ATTRIBUTE["key"]} = "{PROJECT_ATTRIBUTE["value"]}"']
-        if tipo:
-            conditions.append(f'tipo_incidente = "{tipo}"')
+    db_save_report(reporte_id, report, audit)
+    result["reporte_id"] = reporte_id
+    return result
 
-        query = " && ".join(conditions)
-
-        body = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "arkiv_query",
-            "params": [
-                query,
-                {
-                    "resultsPerPage": hex(limit),
-                    "includeData": {
-                        "key": True,
-                        "payload": True,
-                        "attributes": True,
-                        "contentType": True,
-                        "expiration": True,
-                        "creator": True,
-                        "owner": True,
-                    },
-                },
-            ],
-        }
-
-        resp = requests.post(ARKIV_RPC, json=body, timeout=30)
-        resp.raise_for_status()
-        result = resp.json().get("result", {})
-        return result.get("data", [])
-
-    except Exception as e:
-        logger.error("ARKIV: error en query — %s", str(e))
-        return []
+def query_reports(tipo=None, limit=50):
+    return db_list_reports(limit=limit, tipo=tipo)

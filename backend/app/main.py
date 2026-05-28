@@ -103,7 +103,7 @@ def submit_report(report: Report):
     data = report.model_dump()
     audit = audit_report(data)
 
-    arkiv = store_report(data, audit)
+    arkiv = store_report(data, audit, reporte_id=reporte_id)
 
     return ReportResponse(
         status=audit["status_verificacion"].lower(),
