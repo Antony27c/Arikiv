@@ -42,7 +42,7 @@ export default function NewsFeed({ synced, pending }) {
     getReports().then((res) => {
       setArkivReports(res.reports || []);
     }).catch(() => {});
-  }, []);
+  }, [synced.length]);
 
   const realItems = synced.map(s => ({ ...s, _sample: false }));
   const arkivItems = arkivReports.filter(

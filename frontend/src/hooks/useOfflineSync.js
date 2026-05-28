@@ -1,19 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { submitReport } from "../services/api";
 
-const STORAGE_KEY = "rutasegura_pending";
+const PENDING_KEY = "rutasegura_pending";
+const SYNCED_KEY = "rutasegura_synced";
 
-function loadQueue() {
+function loadQueued(key) {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(key) || "[]");
   } catch {
     return [];
   }
 }
 
 export function useOfflineSync() {
-  const [pending, setPending] = useState(loadQueue);
-  const [synced, setSynced] = useState([]);
+  const [pending, setPending] = useState(() => loadQueued(PENDING_KEY));
+  const [synced, setSynced] = useState(() => loadQueued(SYNCED_KEY));
   const [online, setOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
 
@@ -29,8 +30,12 @@ export function useOfflineSync() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   }, [pending]);
+
+  useEffect(() => {
+    localStorage.setItem(SYNCED_KEY, JSON.stringify(synced));
+  }, [synced]);
 
   const enqueue = useCallback((report) => {
     const entry = { ...report, _id: Date.now(), _queuedAt: new Date().toISOString() };
