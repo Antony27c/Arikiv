@@ -48,8 +48,7 @@ SYSTEM_PROMPT = (
     "- score_confianza_geografica: número entre 0.0 y 1.0\n"
     "- resumen_tecnico_ia: resumen formal del incidente en español\n"
     "- clasificacion_urgencia_ia: 'CRÍTICA' | 'ALTA' | 'MODERADA' | 'BAJA'\n"
-    "- analisis_coherencia: explicación breve de por qué se aprueba o rechaza\n"
-    "- tipo_incidente_detectado: tipo inferido (derrumbe, bache, neblina, etc)\n\n"
+    "- analisis_coherencia: UNA SOLA ORACIÓN breve que relacione el tipo de incidente con la ubicación, ej: 'El derrumbe reportado en km 45 está dentro del corredor de RN 51' o 'El reporte de neblina indica Salta Capital pero describe la Quebrada del Toro'\n\n"
     "Reglas:\n"
     "1. Si la descripción menciona locaciones de la Puna (Quebrada del Toro, Chorrillos, San Antonio de los Cobres, Tastil) "
     "pero las coordenadas corresponden a Salta Capital o Cafayate → RECHAZADO (fraude)\n"
@@ -74,7 +73,7 @@ def _classify_urgency(desc):
                 return nivel.upper()
     return "BAJA"
 
-def _geographic_analysis(lat, lon, desc):
+def _geographic_analysis(lat, lon, desc, tipo, kil):
     desc_lower = desc.lower()
     mentions_puna = any(loc in desc_lower for loc in PunaLocations)
     mentions_fraud = any(loc in desc_lower for loc in FraudLocations)
@@ -85,18 +84,23 @@ def _geographic_analysis(lat, lon, desc):
     in_salta_capital = (-24.8 <= lat <= -24.7) and (-65.5 <= lon <= -65.3)
     in_cafayate = (-26.1 <= lat <= -26.0) and (-66.0 <= lon <= -65.9)
 
-    if mentions_puna and in_salta_capital:
-        return "RECHAZADO", "El texto describe locaciones de la Puna pero las coordenadas corresponden a Salta Capital"
-    if mentions_puna and in_cafayate:
-        return "RECHAZADO", "El texto describe locaciones de la Puna pero las coordenadas corresponden a Cafayate"
-    if mentions_fraud and in_rn51:
-        return "RECHAZADO", "El texto menciona ubicaciones fuera de la RN 51 pero las coordenadas están dentro del corredor"
-    if not in_rn51 and not (lat == 0.0 and lon == 0.0):
-        return "RECHAZADO", "Coordenadas fuera del corredor de la Ruta Nacional 51"
-    if lat == 0.0 and lon == 0.0:
-        return "RECHAZADO", "Coordenadas (0,0) — GPS sin señal"
+    ubicacion = f"km {kil}" if kil else f"({lat}, {lon})"
 
-    return "APROBADO", "Coordenadas coherentes con la Ruta Nacional 51"
+    if mentions_puna and in_salta_capital:
+        loc = next((l for l in PunaLocations if l in desc_lower), "la Puna")
+        return "RECHAZADO", f"El {tipo.lower()} menciona '{loc}' pero está reportado en Salta Capital"
+    if mentions_puna and in_cafayate:
+        loc = next((l for l in PunaLocations if l in desc_lower), "la Puna")
+        return "RECHAZADO", f"El {tipo.lower()} describe '{loc}' pero las coordenadas caen en Cafayate"
+    if mentions_fraud and in_rn51:
+        loc = next((l for l in FraudLocations if l in desc_lower), "fuera de la ruta")
+        return "RECHAZADO", f"El {tipo.lower()} menciona '{loc}' pero está geolocalizado en RN 51"
+    if not in_rn51 and not (lat == 0.0 and lon == 0.0):
+        return "RECHAZADO", f"El {tipo.lower()} en {ubicacion} está fuera del corredor de RN 51"
+    if lat == 0.0 and lon == 0.0:
+        return "RECHAZADO", f"El {tipo.lower()} no tiene coordenadas válidas (GPS sin señal)"
+
+    return "APROBADO", f"El {tipo.lower()} en {ubicacion} está dentro del corredor de RN 51 y es coherente"
 
 def _generate_summary(desc, tipo, kil):
     desc_clean = re.sub(r'\s+', ' ', desc.strip())
@@ -196,7 +200,7 @@ def audit_report(report):
         resumen = ai_result.get("resumen_tecnico_ia", _generate_summary(desc, tipo, kil))
         score = max(0.0, min(1.0, ai_result.get("score_confianza_geografica", 0.5)))
     else:
-        status_verificacion, analisis = _geographic_analysis(lat, lon, desc)
+        status_verificacion, analisis = _geographic_analysis(lat, lon, desc, tipo, kil)
         clasificacion_urgencia = _classify_urgency(desc)
         resumen = _generate_summary(desc, tipo, kil)
 
