@@ -199,3 +199,35 @@ input:focus, select:focus, textarea:focus {
 .pw-nav-active span {
   color: #4361ee !important;
 }
+
+.pw-autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pw-autocomplete-item {
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pw-autocomplete-item:hover,
+.pw-autocomplete-selected {
+  background: #eef1ff;
+  color: #4361ee;
+}
+
+.pw-autocomplete-item:last-child {
+  border-bottom: none;
+}

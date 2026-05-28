@@ -1,10 +1,29 @@
 import { useState, useRef } from "react";
+import AutocompleteInput from "./AutocompleteInput";
 
 const IncidentTypes = [
   "Derrumbe", "Bache", "Neblina", "Lluvia", "Animal suelto",
   "Vehículo averiado", "Accidente", "Corte de ruta", "Señalización dañada",
   "Otro",
 ];
+
+const Empresas = [
+  "Lithium Americas", "Sales de Jujuy", "Eramine", "Minera del Altip",
+  "Tecpetrol", "Pluspetrol", "YPF Litio",
+];
+
+const KmsSugeridos = [
+  "22", "32", "45", "53", "65", "78", "92", "106", "115", "128",
+];
+
+function saveHistory(key, value) {
+  if (!value) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(`pw_hist_${key}`) || "[]");
+    const updated = [value, ...stored.filter(s => s !== value)].slice(0, 15);
+    localStorage.setItem(`pw_hist_${key}`, JSON.stringify(updated));
+  } catch {}
+}
 
 export default function ReportForm({ onSave }) {
   const [form, setForm] = useState({
@@ -61,6 +80,11 @@ export default function ReportForm({ onSave }) {
       return;
     }
 
+    saveHistory("chofer", form.chofer_id);
+    saveHistory("empresa", form.empresa_minera);
+    saveHistory("patente", form.patente_camion);
+    saveHistory("kilometro", form.kilometro);
+
     let imagen_hash = "";
     if (photo) {
       const buf = new TextEncoder().encode(photo);
@@ -106,10 +130,31 @@ export default function ReportForm({ onSave }) {
 
       <div className="pw-block">
         <h3 className="pw-block-title">Chofer / Empresa</h3>
-        <input className="pw-input" placeholder="ID del Chofer *" value={form.chofer_id} onChange={set("chofer_id")} />
+        <AutocompleteInput
+          placeholder="ID del Chofer *"
+          value={form.chofer_id}
+          onChange={set("chofer_id")}
+          suggestions={[]}
+          historyKey="chofer"
+          required
+        />
         <div className="pw-row" style={{ flexWrap: "wrap" }}>
-          <input className="pw-input" placeholder="Empresa minera" value={form.empresa_minera} onChange={set("empresa_minera")} style={{ flex: "1 1 140px" }} />
-          <input className="pw-input" placeholder="Patente" value={form.patente_camion} onChange={set("patente_camion")} style={{ flex: "1 1 120px" }} />
+          <AutocompleteInput
+            placeholder="Empresa minera"
+            value={form.empresa_minera}
+            onChange={set("empresa_minera")}
+            suggestions={Empresas}
+            historyKey="empresa"
+            style={{ flex: "1 1 140px" }}
+          />
+          <AutocompleteInput
+            placeholder="Patente"
+            value={form.patente_camion}
+            onChange={set("patente_camion")}
+            suggestions={[]}
+            historyKey="patente"
+            style={{ flex: "1 1 120px" }}
+          />
         </div>
       </div>
 
@@ -123,7 +168,15 @@ export default function ReportForm({ onSave }) {
           <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "1 1 160px" }}>
             {geoStatus || "Obtener GPS"}
           </button>
-          <input className="pw-input" placeholder="Km" value={form.kilometro} onChange={set("kilometro")} type="number" style={{ flex: "0 1 100px" }} />
+          <AutocompleteInput
+            placeholder="Km"
+            value={form.kilometro}
+            onChange={set("kilometro")}
+            suggestions={KmsSugeridos}
+            historyKey="kilometro"
+            type="number"
+            style={{ flex: "0 1 100px" }}
+          />
         </div>
       </div>
 

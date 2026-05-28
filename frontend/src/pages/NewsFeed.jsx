@@ -1,3 +1,5 @@
+import sampleNews from "../data/sampleNews";
+
 const urgencyColors = {
   CRÍTICA: "#e63946",
   ALTA: "#f77f00",
@@ -12,7 +14,9 @@ const statusColors = {
 };
 
 export default function NewsFeed({ synced, pending }) {
-  const all = [...synced].reverse();
+  const realItems = synced.map(s => ({ ...s, _sample: false }));
+  const sampleItems = synced.length === 0 ? sampleNews.map(s => ({ ...s, _sample: true })) : [];
+  const all = [...sampleItems, ...realItems].reverse();
 
   return (
     <div>
@@ -63,7 +67,7 @@ export default function NewsFeed({ synced, pending }) {
                   <strong style={{ fontSize: 13, color: statusColors[s._result?.status] || "#2a9d8f" }}>
                     {evento.tipo_incidente || "Incidente"}
                   </strong>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                     {v?.clasificacion_urgencia_ia && (
                       <span style={{
                         fontSize: 10, padding: "2px 10px", borderRadius: 12, color: "#fff",
@@ -80,6 +84,14 @@ export default function NewsFeed({ synced, pending }) {
                     }}>
                       {s._result?.status === "aprobado" ? "APROBADO" : "RECHAZADO"}
                     </span>
+                    {s._sample && (
+                      <span style={{
+                        fontSize: 9, padding: "1px 6px", borderRadius: 8,
+                        background: "#e9ecef", color: "#868e96", fontWeight: 500,
+                      }}>
+                        EJEMPLO
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -88,7 +100,7 @@ export default function NewsFeed({ synced, pending }) {
                 </div>
 
                 <div className="pw-card-body" style={{ fontSize: 12 }}>
-                  <span>{meta.chofer_id}</span>
+                  <span>{meta.chofer_id}{meta.empresa_minera ? ` · ${meta.empresa_minera}` : ""}</span>
                   <span>Km {geo.kilometro || "?"} · RN 51</span>
                 </div>
 
