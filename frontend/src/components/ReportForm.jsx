@@ -68,8 +68,27 @@ export default function ReportForm({ onSave }) {
   function handlePhoto(e) {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La foto es muy grande (máx 5MB)");
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => setPhoto(reader.result);
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1024;
+        if (img.width <= maxW) { setPhoto(reader.result); return; }
+        const ratio = maxW / img.width;
+        const c = document.createElement("canvas");
+        c.width = maxW;
+        c.height = img.height * ratio;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        setPhoto(c.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = reader.result;
+    };
     reader.readAsDataURL(file);
   }
 
@@ -85,11 +104,15 @@ export default function ReportForm({ onSave }) {
     saveHistory("patente", form.patente_camion);
     saveHistory("kilometro", form.kilometro);
 
-    let imagen_hash = "";
+    let imagen_hash = null;
     if (photo) {
-      const buf = new TextEncoder().encode(photo);
-      const hash = await crypto.subtle.digest("SHA-256", buf);
-      imagen_hash = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+      try {
+        const buf = new TextEncoder().encode(photo.slice(0, 102400));
+        const hash = await crypto.subtle.digest("SHA-256", buf);
+        imagen_hash = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+      } catch {
+        imagen_hash = null;
+      }
     }
 
     onSave({
