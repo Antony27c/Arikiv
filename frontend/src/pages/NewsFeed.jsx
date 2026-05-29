@@ -3,16 +3,16 @@ import { getReports } from "../services/api";
 import sampleNews from "../data/sampleNews";
 
 const urgencyColors = {
-  CRÍTICA: "#e63946",
-  ALTA: "#f77f00",
-  MODERADA: "#fcbf49",
-  BAJA: "#2a9d8f",
+  CRÍTICA: "var(--critica)",
+  ALTA: "var(--alta)",
+  MODERADA: "var(--moderada)",
+  BAJA: "var(--baja)",
 };
 
 const statusColors = {
-  aprobado: "#2a9d8f",
-  rechazado: "#e63946",
-  flagged: "#f77f00",
+  aprobado: "var(--aprobado)",
+  rechazado: "var(--rechazado)",
+  flagged: "var(--alta)",
 };
 
 function parseArkivReport(entry) {
@@ -49,13 +49,90 @@ export default function NewsFeed({ synced, pending }) {
   const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
   const all = [...arkivItems, ...realItems, ...sampleItems];
 
+  const rechazados = all.filter(s => s._result?.status === "rechazado");
+  const noRechazados = all.filter(s => s._result?.status !== "rechazado");
+
+  const altaPrioridad = noRechazados.filter(s => {
+    const u = s._result?.validacion_ia?.clasificacion_urgencia_ia;
+    return u === "CRÍTICA" || u === "ALTA";
+  });
+  const prioridadModerada = noRechazados.filter(s => {
+    const u = s._result?.validacion_ia?.clasificacion_urgencia_ia;
+    return u === "MODERADA";
+  });
+  const bajaPrioridad = noRechazados.filter(s => {
+    const u = s._result?.validacion_ia?.clasificacion_urgencia_ia;
+    return !u || u === "BAJA";
+  });
+
+  function renderCard(s) {
+    const v = s._result?.validacion_ia;
+    const a = s._result?.arkiv;
+    const meta = s.metadata_origen || {};
+    const geo = s.geolocalizacion_reportada || {};
+    const evento = s.datos_evento || {};
+    const statusKey = s._result?.status || "aprobado";
+
+    return (
+      <div key={s._id} className="pw-card" style={{
+        borderLeftColor: statusColors[statusKey] || "var(--aprobado)",
+      }}>
+        <div className="pw-card-header">
+          <strong style={{ fontSize: 13, color: statusColors[statusKey] || "var(--aprobado)" }}>
+            {evento.tipo_incidente || "Incidente"}
+          </strong>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            {v?.clasificacion_urgencia_ia && (
+              <span className={`status-badge status-badge-${v.clasificacion_urgencia_ia.toLowerCase()}`}>
+                {v.clasificacion_urgencia_ia}
+              </span>
+            )}
+            <span className={`verification-badge verification-badge-${statusKey}`}>
+              {statusKey === "aprobado" ? "APROBADO" : "RECHAZADO"}
+            </span>
+            {s._sample && (
+              <span style={{
+                fontSize: 9, padding: "1px 6px", borderRadius: 8,
+                background: "var(--fondo)", color: "var(--texto-secundario)", fontWeight: 500,
+              }}>
+                EJEMPLO
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ fontSize: 12, color: "var(--texto-secundario)", marginBottom: 6, lineHeight: 1.5 }}>
+          {v?.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}
+        </div>
+
+        <div className="pw-card-body" style={{ fontSize: 12 }}>
+          <span>{meta.chofer_id}{meta.empresa_minera ? ` · ${meta.empresa_minera}` : ""}</span>
+          <span>Km {geo.kilometro || "?"} · RN 51</span>
+        </div>
+
+        {v?.analisis_coherencia && (
+          <div className="pw-card-footer" style={{
+            color: statusKey === "aprobado" ? "var(--aprobado)" : "var(--rechazado)",
+          }}>
+            {v.analisis_coherencia}
+          </div>
+        )}
+
+        <div className="pw-card-body" style={{ marginTop: 6, fontSize: 11, color: "var(--texto-secundario)" }}>
+          <span>Score: {Math.round((v?.score_confianza_geografica || 0) * 100)}%</span>
+          <span>{a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {all.length === 0 && pending.length === 0 && (
-        <div className="pw-card" style={{ textAlign: "center", padding: 32, borderLeft: "none" }}>
+        <div className="pw-card pw-empty-state">
           <p style={{ fontSize: 32, marginBottom: 8 }}>📡</p>
-          <p style={{ color: "#666", fontSize: 14 }}>No hay incidentes reportados aún.</p>
-          <p style={{ color: "#999", fontSize: 13, marginTop: 4 }}>Reportá el primero desde "Reportar"</p>
+          <p style={{ color: "var(--texto-secundario)", fontSize: 14 }}>No hay incidentes reportados aún.</p>
+          <p style={{ color: "var(--texto-secundario)", fontSize: 13, marginTop: 4 }}>Reportá el primero desde "Reportar"</p>
         </div>
       )}
 
@@ -63,10 +140,10 @@ export default function NewsFeed({ synced, pending }) {
         <section className="pw-section">
           <h3 className="pw-section-title">Pendientes de envío</h3>
           {pending.map((p) => (
-            <div key={p._id} className="pw-card" style={{ borderLeftColor: "#fcbf49", opacity: 0.8 }}>
+            <div key={p._id} className="pw-card" style={{ borderLeftColor: "var(--moderada)", opacity: 0.8 }}>
               <div className="pw-card-header">
                 <strong style={{ fontSize: 13 }}>{p.metadata_origen?.chofer_id}</strong>
-                <span style={{ fontSize: 11, color: "#fcbf49", fontWeight: 600 }}>OFFLINE</span>
+                <span style={{ fontSize: 11, color: "var(--moderada)", fontWeight: 600 }}>OFFLINE</span>
               </div>
               <div className="pw-card-body">
                 <span>{p.datos_evento?.tipo_incidente}</span>
@@ -81,76 +158,47 @@ export default function NewsFeed({ synced, pending }) {
       )}
 
       {all.length > 0 && (
-        <section className="pw-section">
-          <h3 className="pw-section-title">Noticias de incidentes</h3>
-          {all.map((s) => {
-            const v = s._result?.validacion_ia;
-            const a = s._result?.arkiv;
-            const meta = s.metadata_origen || {};
-            const geo = s.geolocalizacion_reportada || {};
-            const evento = s.datos_evento || {};
+        <>
+          <section className="pw-section">
+            <h3 className="pw-section-title">🔴 Alta prioridad</h3>
+            <div className="pw-news-grid">
+              {altaPrioridad.map(s => renderCard(s))}
+              {altaPrioridad.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de alta prioridad.</p>
+              )}
+            </div>
+          </section>
 
-            return (
-              <div key={s._id} className="pw-card" style={{
-                borderLeftColor: statusColors[s._result?.status] || "#2a9d8f",
-              }}>
-                <div className="pw-card-header">
-                  <strong style={{ fontSize: 13, color: statusColors[s._result?.status] || "#2a9d8f" }}>
-                    {evento.tipo_incidente || "Incidente"}
-                  </strong>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                    {v?.clasificacion_urgencia_ia && (
-                      <span style={{
-                        fontSize: 10, padding: "2px 10px", borderRadius: 12, color: "#fff",
-                        fontWeight: 700, background: urgencyColors[v.clasificacion_urgencia_ia] || "#999",
-                      }}>
-                        {v.clasificacion_urgencia_ia}
-                      </span>
-                    )}
-                    <span style={{
-                      fontSize: 10, padding: "2px 8px", borderRadius: 12,
-                      background: s._result?.status === "aprobado" ? "#d4edda" : "#f8d7da",
-                      color: s._result?.status === "aprobado" ? "#155724" : "#721c24",
-                      fontWeight: 600,
-                    }}>
-                      {s._result?.status === "aprobado" ? "APROBADO" : "RECHAZADO"}
-                    </span>
-                    {s._sample && (
-                      <span style={{
-                        fontSize: 9, padding: "1px 6px", borderRadius: 8,
-                        background: "#e9ecef", color: "#868e96", fontWeight: 500,
-                      }}>
-                        EJEMPLO
-                      </span>
-                    )}
-                  </div>
-                </div>
+          <section className="pw-section">
+            <h3 className="pw-section-title">🟡 Prioridad moderada</h3>
+            <div className="pw-news-grid">
+              {prioridadModerada.map(s => renderCard(s))}
+              {prioridadModerada.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de prioridad moderada.</p>
+              )}
+            </div>
+          </section>
 
-                <div style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.5 }}>
-                  {v?.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}
-                </div>
+          <section className="pw-section">
+            <h3 className="pw-section-title">🟢 Baja prioridad</h3>
+            <div className="pw-news-grid">
+              {bajaPrioridad.map(s => renderCard(s))}
+              {bajaPrioridad.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de baja prioridad.</p>
+              )}
+            </div>
+          </section>
 
-                <div className="pw-card-body" style={{ fontSize: 12 }}>
-                  <span>{meta.chofer_id}{meta.empresa_minera ? ` · ${meta.empresa_minera}` : ""}</span>
-                  <span>Km {geo.kilometro || "?"} · RN 51</span>
-                </div>
-
-                {v?.analisis_coherencia && (
-                  <div className="pw-card-footer" style={{
-                    color: s._result?.status === "aprobado" ? "#2a9d8f" : "#e63946",
-                  }}>
-                    {v.analisis_coherencia}
-                  </div>
-                )}
-
-                <div className="pw-card-body" style={{ marginTop: 6, fontSize: 11, color: "#999" }}>
-                  <span>Score: {Math.round((v?.score_confianza_geografica || 0) * 100)}%</span>
-                  <span>{a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}</span>
-                </div>
-              </div>
-            );
-          })}
-        </section>
+          <section className="pw-section">
+            <h3 className="pw-section-title">⛔ Rechazados</h3>
+            <div className="pw-news-grid">
+              {rechazados.map(s => renderCard(s))}
+              {rechazados.length === 0 && (
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes rechazados.</p>
+              )}
+            </div>
+          </section>
+        </>
       )}
     </div>
   );

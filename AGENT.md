@@ -13,8 +13,8 @@ Actuar como un motor de curación, auditoría geográfica y filtro de seguridad 
 Cruzar la descripción textual del chofer con las coordenadas GPS (`latitud`/`longitud`) y el `kilómetro` reportado de la RN 51.
 
 - **Implementación**: Se compara la ubicación reportada contra bounding box de RN 51: lat [-24.5, -23.0], lon [-66.5, -65.5]. También se buscan keywords de localidades en el texto (Quebrada del Toro, Chorrillos, Tastil, San Antonio de los Cobres, etc.) y se verifica correspondencia.
-- **Si IA está configurada**: Se delega a modelo OpenAI-compatible con prompt que devuelve JSON estructurado.
-- **Fallback a reglas**: Si no hay API key o falla la request, se ejecutan reglas Python puras con análisis de bounding box + keywords + matching de cadenas.
+- **Si IA está configurada**: Se delega a modelo OpenAI-compatible (`gpt-4o-mini`) con prompt estructurado que devuelve JSON.
+- **Fallback a reglas**: Si no hay API key o falla la request, se ejecutan reglas Python puras con análisis de bounding box + keywords + matching de cadenas. Incluye detección de coordenadas (0,0) por GPS sin señal.
 - **Resultado**: `score_confianza_geografica` (0.0 a 1.0), `analisis_coherencia` textual, `status_verificacion` ("APROBADO" o "RECHAZADO" con umbral < 0.4).
 
 ### 2. Clasificación de Urgencia e Impacto
@@ -42,9 +42,14 @@ Adjuntar al payload original el objeto `validacion_ia`:
   "score_confianza_geografica": 0.00,
   "resumen_tecnico_ia": "string",
   "clasificacion_urgencia_ia": "BAJA | MODERADA | ALTA | CRÍTICA",
-  "analisis_coherencia": "string"
+  "analisis_coherencia": "string",
+  "passed": true,
+  "flags": ["Coordenadas (0,0) — posible GPS sin señal"]
 }
 ```
+
+- `passed`: booleano — `true` si `status_verificacion` es `"APROBADO"`.
+- `flags`: lista de strings con advertencias adicionales (coordenadas inválidas, duplicados por Haversine <50m, etc.).
 
 ## Estructura del JSON de Entrada
 

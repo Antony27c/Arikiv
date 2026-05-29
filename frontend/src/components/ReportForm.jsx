@@ -149,69 +149,71 @@ export default function ReportForm({ onSave }) {
 
   return (
     <form onSubmit={handleSubmit} className="pw-form">
-      <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px", color: "#1a1a2e" }}>Nuevo Reporte Vial</h2>
+      <h2>Nuevo Reporte Vial</h2>
 
-      <div className="pw-block">
-        <h3 className="pw-block-title">Chofer / Empresa</h3>
-        <AutocompleteInput
-          placeholder="ID del Chofer *"
-          value={form.chofer_id}
-          onChange={set("chofer_id")}
-          suggestions={[]}
-          historyKey="chofer"
-          required
-        />
-        <div className="pw-row" style={{ flexWrap: "wrap" }}>
+      <div className="pw-form-grid">
+        <div className="pw-block">
+          <h3 className="pw-block-title">Chofer / Empresa</h3>
           <AutocompleteInput
-            placeholder="Empresa minera"
-            value={form.empresa_minera}
-            onChange={set("empresa_minera")}
-            suggestions={Empresas}
-            historyKey="empresa"
-            style={{ flex: "1 1 140px" }}
-          />
-          <AutocompleteInput
-            placeholder="Patente"
-            value={form.patente_camion}
-            onChange={set("patente_camion")}
+            placeholder="ID del Chofer *"
+            value={form.chofer_id}
+            onChange={set("chofer_id")}
             suggestions={[]}
-            historyKey="patente"
-            style={{ flex: "1 1 120px" }}
+            historyKey="chofer"
+            required
           />
+          <div className="pw-row" style={{ flexWrap: "wrap" }}>
+            <AutocompleteInput
+              placeholder="Empresa minera"
+              value={form.empresa_minera}
+              onChange={set("empresa_minera")}
+              suggestions={Empresas}
+              historyKey="empresa"
+              style={{ flex: "1 1 140px" }}
+            />
+            <AutocompleteInput
+              placeholder="Patente"
+              value={form.patente_camion}
+              onChange={set("patente_camion")}
+              suggestions={[]}
+              historyKey="patente"
+              style={{ flex: "1 1 120px" }}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="pw-block">
-        <h3 className="pw-block-title">Ubicación</h3>
-        <div className="pw-row" style={{ flexWrap: "wrap" }}>
-          <input className="pw-input" placeholder="Latitud" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
-          <input className="pw-input" placeholder="Longitud" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
+        <div className="pw-block">
+          <h3 className="pw-block-title">Ubicación</h3>
+          <div className="pw-row" style={{ flexWrap: "wrap" }}>
+            <input className="pw-input" placeholder="Latitud" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
+            <input className="pw-input" placeholder="Longitud" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
+          </div>
+          <div className="pw-row" style={{ flexWrap: "wrap" }}>
+            <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "1 1 160px" }}>
+              {geoStatus || "Obtener GPS"}
+            </button>
+            <AutocompleteInput
+              placeholder="Km"
+              value={form.kilometro}
+              onChange={set("kilometro")}
+              suggestions={KmsSugeridos}
+              historyKey="kilometro"
+              type="number"
+              style={{ flex: "0 1 100px" }}
+            />
+          </div>
         </div>
-        <div className="pw-row" style={{ flexWrap: "wrap" }}>
-          <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "1 1 160px" }}>
-            {geoStatus || "Obtener GPS"}
-          </button>
-          <AutocompleteInput
-            placeholder="Km"
-            value={form.kilometro}
-            onChange={set("kilometro")}
-            suggestions={KmsSugeridos}
-            historyKey="kilometro"
-            type="number"
-            style={{ flex: "0 1 100px" }}
-          />
-        </div>
-      </div>
 
-      <div className="pw-block">
-        <h3 className="pw-block-title">Incidente</h3>
-        <select className="pw-input" value={form.tipo_incidente} onChange={set("tipo_incidente")}>
-          <option value="">Tipo de incidente *</option>
-          {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <textarea className="pw-input" placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} />
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
-        {photo && <img src={photo} alt="preview" className="pw-preview" />}
+        <div className="pw-block pw-full-width">
+          <h3 className="pw-block-title">Incidente</h3>
+          <select className="pw-input" value={form.tipo_incidente} onChange={set("tipo_incidente")}>
+            <option value="">Tipo de incidente *</option>
+            {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <textarea className="pw-input" placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} />
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
+          {photo && <img src={photo} alt="preview" className="pw-preview" />}
+        </div>
       </div>
 
       <button type="submit" className="pw-btn-primary">Guardar Localmente</button>
