@@ -30,7 +30,7 @@ export default function AdminPanel() {
   const filtered = filter === "all"
     ? reports
     : reports.filter((r) => {
-        if (filter === "pending") return !r.admin_verification;
+        if (filter === "pending") return !r.admin_verification || r.admin_verification === "pending";
         return r.admin_verification === filter;
       });
 
@@ -144,7 +144,7 @@ export default function AdminPanel() {
                 </div>
               )}
 
-              {!vStatus && (
+              {(!vStatus || vStatus === "pending") && (
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                   <button
                     onClick={() => handleVerify(r.reporte_id, "verified")}
