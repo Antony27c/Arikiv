@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { submitReport } from "../services/api";
 
 const PENDING_KEY = "rutasegura_pending";
 const SYNCED_KEY = "rutasegura_synced";
+const MAX_RETRIES = 3;
+const RETRY_COOLDOWN_MS = 15000;
 
 function loadQueued(key) {
   try {
@@ -17,6 +19,7 @@ export function useOfflineSync() {
   const [synced, setSynced] = useState(() => loadQueued(SYNCED_KEY));
   const [online, setOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
+  const lastSync = useRef(0);
 
   useEffect(() => {
     const onUp = () => setOnline(true);
@@ -37,15 +40,17 @@ export function useOfflineSync() {
     localStorage.setItem(SYNCED_KEY, JSON.stringify(synced));
   }, [synced]);
 
-  const MAX_RETRIES = 3;
-
   const enqueue = useCallback((report) => {
     const entry = { ...report, _id: Date.now(), _queuedAt: new Date().toISOString(), _retries: 0 };
     setPending((prev) => [...prev, entry]);
   }, []);
 
   const sync = useCallback(async () => {
-    if (pending.length === 0 || !online) return;
+    if (pending.length === 0 || !online || syncing) return;
+    const now = Date.now();
+    if (now - lastSync.current < RETRY_COOLDOWN_MS) return;
+    lastSync.current = now;
+
     setSyncing(true);
     const queue = [...pending];
     const done = [];
@@ -73,12 +78,12 @@ export function useOfflineSync() {
     setPending(failed);
     setSynced((prev) => [...prev, ...done]);
     setSyncing(false);
-  }, [pending, online]);
+  }, [pending, online, syncing]);
 
   useEffect(() => {
-    if (online && pending.length > 0 && !syncing) {
-      sync();
-    }
+    if (!online || pending.length === 0) return;
+    const timer = setTimeout(() => sync(), 1000);
+    return () => clearTimeout(timer);
   }, [online, pending.length, sync]);
 
   const clearSynced = useCallback(() => {
