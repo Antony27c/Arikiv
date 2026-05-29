@@ -37,8 +37,10 @@ export function useOfflineSync() {
     localStorage.setItem(SYNCED_KEY, JSON.stringify(synced));
   }, [synced]);
 
+  const MAX_RETRIES = 3;
+
   const enqueue = useCallback((report) => {
-    const entry = { ...report, _id: Date.now(), _queuedAt: new Date().toISOString() };
+    const entry = { ...report, _id: Date.now(), _queuedAt: new Date().toISOString(), _retries: 0 };
     setPending((prev) => [...prev, entry]);
   }, []);
 
@@ -59,7 +61,12 @@ export function useOfflineSync() {
         const result = await submitReport(payload);
         done.push({ ...item, _result: result, _error: false });
       } catch {
-        failed.push(item);
+        const retries = (item._retries || 0) + 1;
+        if (retries >= MAX_RETRIES) {
+          done.push({ ...item, _result: null, _error: true });
+        } else {
+          failed.push({ ...item, _retries: retries });
+        }
       }
     }
 
