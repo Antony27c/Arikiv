@@ -47,6 +47,74 @@ O con Docker Compose:
 docker compose up --build
 ```
 
+## ARKIV Network — Almacenamiento Inmutable
+
+Los reportes se almacenan en **ARKIV Network**, una capa de disponibilidad de datos descentralizada sobre Ethereum.
+
+### Entity example (lo que se guarda en ARKIV)
+
+Cada reporte se almacena como una entidad con payload, atributos y expiración. Este proyecto usa el modo **simulación** por defecto (sin private key), pero en producción se escribe directamente en la blockchain:
+
+```typescript
+// Cada reporte almacenado contiene:
+{
+  reporte_id: "RP-1712345601",
+  metadata_origen: {
+    chofer_id: "CHO-001",
+    empresa_minera: "Lithium Americas",
+    patente_camion: "AA123BB",
+    timestamp_offline: "2026-05-27T08:30:00Z",
+  },
+  geolocalizacion_reportada: {
+    ruta: "Ruta Nacional 51",
+    kilometro: 45,
+    coordenadas: { latitud: -24.183, longitud: -66.312 },
+  },
+  datos_evento: {
+    tipo_incidente: "Derrumbe",
+    descripcion_chofer: "...",
+  },
+  validacion_ia: {
+    agente_id: "arkiv-miner-audit-v1",
+    status_verificacion: "APROBADO",
+    score_confianza_geografica: 0.92,
+    clasificacion_urgencia_ia: "CRÍTICA",
+    resumen_tecnico_ia: "...",
+    // ...
+  },
+}
+```
+
+### Consulta de reportes
+
+```typescript
+import { createPublicClient, http } from "@arkiv-network/sdk";
+import { braga } from "@arkiv-network/sdk/chains";
+import { eq } from "@arkiv-network/sdk/query";
+import { PROJECT_ATTRIBUTE } from "@/lib/arkiv";
+
+const client = createPublicClient({ chain: braga, transport: http() });
+
+const result = await client
+  .buildQuery()
+  .where(eq(PROJECT_ATTRIBUTE.key, PROJECT_ATTRIBUTE.value))
+  .where(eq("tipo_incidente", "Derrumbe"))
+  .withPayload(true)
+  .limit(50)
+  .fetch();
+```
+
+### Testnet ARKIV (Braga)
+
+| Recurso     | URL                                                              |
+|-------------|------------------------------------------------------------------|
+| RPC         | `https://braga.hoodi.arkiv.network/rpc`                          |
+| Chain ID    | `60138453102`                                                    |
+| Faucet      | `https://braga.hoodi.arkiv.network/faucet/`                      |
+| Explorer    | `https://explorer.braga.hoodi.arkiv.network/`                    |
+
+> 📖 Más detalles en [`.agents/skills/arkiv-best-practices/`](.agents/skills/arkiv-best-practices/)
+
 ## Variables de entorno
 
 ### Backend (`backend/.env`)
