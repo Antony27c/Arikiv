@@ -121,12 +121,12 @@ export default function ReportForm({ onSave, user }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <form onSubmit={handleSubmit}>
       <div className="pw-stepper">
         {STEPS.map((label, i) => (
           <span key={label} style={{ display: "flex", alignItems: "center" }}>
             <span className={`pw-step ${i === step ? "pw-step-active" : ""} ${i < step ? "pw-step-done" : ""}`}>
-              <span className="pw-step-num">{i < step ? "✓" : i + 1}</span>
+              <span className="pw-step-num">{i < step ? "\u2713" : i + 1}</span>
               <span className="pw-step-label">{label}</span>
             </span>
             {i < STEPS.length - 1 && <span className={`pw-step-line ${i < step ? "done" : ""}`} />}
@@ -136,7 +136,7 @@ export default function ReportForm({ onSave, user }) {
 
       {step === 0 && (
         <div className="pw-block">
-          <h3 className="pw-block-title">🚛 Identificación</h3>
+          <h3 className="pw-block-title">Identificacion</h3>
           <AutocompleteInput placeholder="ID del Chofer *" value={form.chofer_id} onChange={setF("chofer_id")} suggestions={[]} historyKey="chofer" required />
           <div className="pw-row" style={{ flexWrap: "wrap" }}>
             <AutocompleteInput placeholder="Empresa minera" value={form.empresa_minera} onChange={setF("empresa_minera")} suggestions={Empresas} historyKey="empresa" style={{ flex: "1 1 140px" }} />
@@ -147,53 +147,52 @@ export default function ReportForm({ onSave, user }) {
 
       {step === 1 && (
         <div className="pw-block">
-          <h3 className="pw-block-title">📍 Ubicación</h3>
-          <button type="button" onClick={getLocation} className={`pw-gps-btn ${searching ? "searching" : ""}`}>
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-            {geoStatus || "Obtener ubicación GPS"}
+          <h3 className="pw-block-title">Ubicacion</h3>
+          <button type="button" onClick={getLocation} className="pw-btn-primary" style={{ marginBottom: 12 }}>
+            {geoStatus || "Obtener ubicacion GPS"}
           </button>
-          <div className="pw-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <div className="pw-row" style={{ flexWrap: "wrap", gap: 12 }}>
             <input className="pw-input" placeholder="Latitud *" value={form.latitud} onChange={setF("latitud")} style={{ flex: "1 1 140px" }} />
             <input className="pw-input" placeholder="Longitud *" value={form.longitud} onChange={setF("longitud")} style={{ flex: "1 1 140px" }} />
           </div>
-          <div style={{ margin: "0 -16px" }}>
+          <div className="pw-map-wrap" style={{ margin: "12px -20px 0" }}>
             <LocationPicker lat={form.latitud ? parseFloat(form.latitud) : null} lng={form.longitud ? parseFloat(form.longitud) : null}
               onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))} height={300} />
           </div>
-          <AutocompleteInput placeholder="Km aproximado" value={form.kilometro} onChange={setF("kilometro")} suggestions={KmsSugeridos} historyKey="kilometro" type="number" style={{ flex: "0 1 120px" }} />
+          <AutocompleteInput placeholder="Km aproximado" value={form.kilometro} onChange={setF("kilometro")} suggestions={KmsSugeridos} historyKey="kilometro" type="number" style={{ marginTop: 12, flex: "0 1 120px" }} />
         </div>
       )}
 
       {step === 2 && (
         <div className="pw-block">
-          <h3 className="pw-block-title">⚠️ Incidente</h3>
+          <h3 className="pw-block-title">Incidente</h3>
           <select className="pw-input" value={form.tipo_incidente} onChange={setF("tipo_incidente")}>
             <option value="">Tipo de incidente *</option>
             {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <textarea className="pw-input" placeholder="Descripción del incidente" value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={3} />
+          <textarea className="pw-input" placeholder="Descripcion del incidente" value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={3} />
           <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
-          {photo && <img src={photo} alt="preview" className="pw-preview" />}
+          {photo && <img src={photo} alt="" className="pw-preview" />}
         </div>
       )}
 
       {step === 3 && (
         <div className="pw-block">
-          <h3 className="pw-block-title">✅ Confirmar</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, color: "var(--text2)" }}>
-            <p>👤 <strong style={{ color: "var(--text)" }}>Chofer:</strong> {form.chofer_id}{form.empresa_minera ? ` · ${form.empresa_minera}` : ""}</p>
-            <p>📍 <strong style={{ color: "var(--text)" }}>Ubicación:</strong> {form.latitud}, {form.longitud}{form.kilometro ? ` · Km ${form.kilometro}` : ""}</p>
-            <p>⚠️ <strong style={{ color: "var(--text)" }}>Incidente:</strong> {form.tipo_incidente}</p>
-            {form.descripcion_chofer && <p style={{ fontStyle: "italic", color: "var(--text3)" }}>"{form.descripcion_chofer}"</p>}
-            {photo && <img src={photo} alt="preview" style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: "var(--radius-xs)" }} />}
+          <h3 className="pw-block-title">Confirmar</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: "var(--texto)" }}>
+            <p><strong>Chofer:</strong> {form.chofer_id}{form.empresa_minera ? " / " + form.empresa_minera : ""}</p>
+            <p><strong>Ubicacion:</strong> {form.latitud}, {form.longitud}{form.kilometro ? " / Km " + form.kilometro : ""}</p>
+            <p><strong>Incidente:</strong> {form.tipo_incidente}</p>
+            {form.descripcion_chofer && <p style={{ fontStyle: "italic", color: "var(--texto-sec)" }}>"{form.descripcion_chofer}"</p>}
+            {photo && <img src={photo} alt="" style={{ width: "100%", maxHeight: 160, objectFit: "cover" }} />}
           </div>
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 8, padding: "0 16px" }}>
-        {step > 0 && <button type="button" onClick={() => setStep(s => s - 1)} className="pw-btn-secondary" style={{ flex: 1 }}>← Anterior</button>}
-        <button type="submit" className="pw-btn-primary" style={{ flex: 1 }} disabled={!canNext()}>
-          {step < 3 ? "Siguiente →" : "📤 Enviar reporte"}
+      <div style={{ display: "flex", gap: 12, padding: "0 20px" }}>
+        {step > 0 && <button type="button" onClick={() => setStep(s => s - 1)} className="pw-btn-secondary">Anterior</button>}
+        <button type="submit" className="pw-btn-primary" disabled={!canNext()}>
+          {step < 3 ? "Siguiente" : "Enviar reporte"}
         </button>
       </div>
     </form>

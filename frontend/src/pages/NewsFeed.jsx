@@ -52,23 +52,6 @@ function parseArkivReport(entry) {
   };
 }
 
-function DonutScore({ score }) {
-  const r = 16;
-  const c = 2 * Math.PI * r;
-  const offset = c - (score / 100) * c;
-  const color = score >= 80 ? "var(--green)" : score >= 50 ? "var(--yellow)" : "var(--red)";
-  return (
-    <div className="pw-donut">
-      <svg viewBox="0 0 40 40" width={44} height={44}>
-        <circle className="pw-donut-bg" cx="20" cy="20" r={r} />
-        <circle className="pw-donut-fill" cx="20" cy="20" r={r}
-          stroke={color} strokeDasharray={c} strokeDashoffset={offset} />
-      </svg>
-      <span className="pw-donut-label">{score}%</span>
-    </div>
-  );
-}
-
 export default function NewsFeed({ synced, pending }) {
   const [arkivReports, setArkivReports] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
@@ -118,65 +101,42 @@ export default function NewsFeed({ synced, pending }) {
       : urgency === "moderada" ? "pw-card-moderada"
       : "pw-card-baja";
 
-    const emoji = urgency === "crítica" || urgency === "alta" ? "🚨"
-      : urgency === "moderada" ? "⚠️"
-      : "✅";
-
     return (
       <div key={s._id} className={`pw-card ${cardClass}`}>
-        <div className="pw-card-inner" onClick={() => toggle(s._id)}>
-          <div className="pw-card-top">
-            <div className="pw-card-title">
-              <span className="pw-emoji">{emoji}</span>
-              {evento.tipo_incidente || "Incidente"}
-            </div>
-            <div className="pw-card-badges">
-              {v?.clasificacion_urgencia_ia && (
-                <span className={`pw-badge pw-badge-${urgency}`}>{v.clasificacion_urgencia_ia}</span>
-              )}
-              {s._sample && <span className="pw-badge pw-badge-ejemplo">EJEMPLO</span>}
-              {s._synced && <span className="pw-badge pw-badge-pendiente">PENDIENTE</span>}
-            </div>
+        <div onClick={() => toggle(s._id)} style={{ cursor: "pointer" }}>
+          <div className="pw-card-header">
+            <span className="pw-card-title">{evento.tipo_incidente || "Incidente"}</span>
+            <span className={`pw-badge pw-badge-${urgency}`}>
+              {v?.clasificacion_urgencia_ia || "BAJA"}
+            </span>
           </div>
-          <div className="pw-card-km">📍 Km {geo.kilometro || "?"} · RN 51</div>
           <div className="pw-card-meta">
-            <span>👤 {meta.chofer_id || "?"}</span>
-            <span>{meta.empresa_minera || ""}</span>
+            <span>{meta.chofer_id || "?"} &middot; {meta.empresa_minera || "Sin empresa"}</span>
+            <span className="pw-card-km">Km {geo.kilometro || "?"} &middot; RN 51</span>
           </div>
-          {!isOpen && (
-            <div className="pw-donut-wrap" style={{ marginTop: 4, marginBottom: 0 }}>
-              <DonutScore score={score} />
-              <div className="pw-donut-meta">
-                <span>Confianza IA</span>
-                {v?.distancia_ruta_km !== undefined && <span><strong>{v.distancia_ruta_km} km</strong> de RN 51</span>}
-              </div>
-            </div>
-          )}
+          <div className="pw-score">
+            <span className="pw-score-num">{score}</span>
+            <span className="pw-score-label">score IA</span>
+            {v?.distancia_ruta_km !== undefined && (
+              <span className="pw-score-km">{v.distancia_ruta_km} km</span>
+            )}
+          </div>
+          {s._sample && <span className="pw-badge" style={{ borderColor: "var(--texto-sec)", color: "var(--texto-sec)" }}>Ejemplo</span>}
+          {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
         </div>
 
         {isOpen && (
-          <div className="pw-card-expanded">
+          <div style={{ marginTop: 10 }}>
             <div className="pw-card-desc">{v?.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}</div>
-            {v?.direccion && <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 8 }}>📍 {v.direccion}</div>}
-
-            <div className="pw-donut-wrap">
-              <DonutScore score={score} />
-              <div className="pw-donut-meta">
-                <span>Confianza IA</span>
-                <span>Score geográfico</span>
-                {v?.distancia_ruta_km !== undefined && <span><strong>{v.distancia_ruta_km} km</strong> de RN 51</span>}
-              </div>
-              <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)" }}>
-                {a?.simulated ? "🔬 Sim" : "🔗 Arkiv"}
-              </span>
-            </div>
+            {v?.direccion && <div style={{ fontSize: 12, color: "var(--texto-sec)", marginBottom: 8 }}>{v.direccion}</div>}
 
             {v?.analisis_coherencia && (
-              <div className="pw-card-ai-box">
-                <span className="pw-ai-icon">🤖</span>
-                <span className="pw-ai-text">{v.analisis_coherencia}</span>
-              </div>
+              <div className="pw-ai-text">{v.analisis_coherencia}</div>
             )}
+
+            <div style={{ fontSize: 12, color: "var(--texto-sec)", marginBottom: 8 }}>
+              {a?.simulated ? "Simulado" : "Arkiv"} &middot; {a?.entity_key || ""}
+            </div>
 
             {hasCoords && (
               <div className="pw-map-thumb" onClick={(e) => { e.stopPropagation(); toggle(s._id + "_map"); }}>
@@ -186,12 +146,12 @@ export default function NewsFeed({ synced, pending }) {
                     <TileLayer url={tileUrl} />
                     <Rn51Route />
                     <Marker position={[coords.latitud, coords.longitud]}>
-                      <Popup>Km {geo.kilometro || "?"} · RN 51</Popup>
+                      <Popup>Km {geo.kilometro || "?"} &middot; RN 51</Popup>
                     </Marker>
                   </MapContainer>
                 ) : (
-                  <div style={{ height: 140, background: "var(--surface2)", borderRadius: "var(--radius-xs)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--text3)" }}>
-                    📍 Ver mapa
+                  <div style={{ height: 140, background: "var(--fondo)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--texto-sec)", border: "1px solid var(--borde)" }}>
+                    Ver mapa
                   </div>
                 )}
               </div>
@@ -206,72 +166,57 @@ export default function NewsFeed({ synced, pending }) {
     <div>
       {all.length === 0 && pending.length === 0 && (
         <div className="pw-empty">
-          <span className="pw-empty-icon">📡</span>
-          <p className="pw-empty-title">Sin incidentes</p>
-          <p className="pw-empty-desc">No hay reportes verificados aún. Los reportes aparecen aquí después de la moderación.</p>
+          <p className="pw-empty-title">Sin reportes</p>
+          <p className="pw-empty-desc">No hay reportes verificados. Aparecen aqui despues de la moderacion.</p>
         </div>
       )}
 
       {pending.length > 0 && (
-        <section className="pw-section">
-          <h3 className="pw-section-title" style={{ padding: "0 16px" }}>
-            <span className="pw-icon-alert yellow">⏳</span> Pendientes de envío
-          </h3>
+        <div className="pw-section">
+          <h3 className="pw-section-title">Pendientes de envio</h3>
+          <div className="pw-section-sub">{pending.length} reporte{pending.length !== 1 ? "s" : ""} esperando sincronizacion</div>
           {pending.map((p) => (
-            <div key={p._id} className="pw-card pw-card-moderada" style={{ opacity: 0.8 }}>
-              <div className="pw-card-inner">
-                <div className="pw-card-top">
-                  <div className="pw-card-title"><span className="pw-emoji">📤</span>{p.datos_evento?.tipo_incidente || "Reporte"}</div>
-                  <div className="pw-card-badges"><span className="pw-badge pw-badge-pendiente">OFFLINE</span></div>
+            <div key={p._id} className="pw-card pw-card-moderada">
+              <div style={{ padding: "4px 0" }}>
+                <div className="pw-card-header">
+                  <span className="pw-card-title" style={{ fontSize: 15 }}>{p.datos_evento?.tipo_incidente || "Reporte"}</span>
+                  <span className="pw-badge pw-badge-pendiente">Offline</span>
                 </div>
-                <div className="pw-card-km">👤 {p.metadata_origen?.chofer_id} · Km {p.geolocalizacion_reportada?.kilometro || "?"}</div>
+                <div className="pw-card-meta">
+                  <span>{p.metadata_origen?.chofer_id}</span>
+                  <span className="pw-card-km">Km {p.geolocalizacion_reportada?.kilometro || "?"}</span>
+                </div>
               </div>
             </div>
           ))}
-        </section>
+        </div>
       )}
 
       {all.length > 0 && (
         <>
-          <section className="pw-section">
-            <h3 className="pw-section-title">
-              <span className="pw-icon-alert red">⚠️</span> Alta prioridad
-            </h3>
-            <div className="pw-news-grid">
-              {altaPrioridad.length === 0 && <p style={{ fontSize: 12, color: "var(--text3)", padding: "0 16px" }}>Sin incidentes de alta prioridad.</p>}
-              {altaPrioridad.map(s => renderCard(s))}
-            </div>
-          </section>
+          <div className="pw-section">
+            <h3 className="pw-section-title">Alta prioridad</h3>
+            {altaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de alta prioridad.</p>}
+            {altaPrioridad.map(s => renderCard(s))}
+          </div>
 
-          <section className="pw-section">
-            <h3 className="pw-section-title">
-              <span className="pw-icon-alert yellow">⚠️</span> Prioridad moderada
-            </h3>
-            <div className="pw-news-grid">
-              {prioridadModerada.length === 0 && <p style={{ fontSize: 12, color: "var(--text3)", padding: "0 16px" }}>Sin incidentes de prioridad moderada.</p>}
-              {prioridadModerada.map(s => renderCard(s))}
-            </div>
-          </section>
+          <div className="pw-section">
+            <h3 className="pw-section-title">Prioridad moderada</h3>
+            {prioridadModerada.length === 0 && <p className="pw-section-sub">Sin incidentes de prioridad moderada.</p>}
+            {prioridadModerada.map(s => renderCard(s))}
+          </div>
 
-          <section className="pw-section">
-            <h3 className="pw-section-title">
-              <span className="pw-icon-alert green">✅</span> Baja prioridad
-            </h3>
-            <div className="pw-news-grid">
-              {bajaPrioridad.length === 0 && <p style={{ fontSize: 12, color: "var(--text3)", padding: "0 16px" }}>Sin incidentes de baja prioridad.</p>}
-              {bajaPrioridad.map(s => renderCard(s))}
-            </div>
-          </section>
+          <div className="pw-section">
+            <h3 className="pw-section-title">Baja prioridad</h3>
+            {bajaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de baja prioridad.</p>}
+            {bajaPrioridad.map(s => renderCard(s))}
+          </div>
 
           {rechazados.length > 0 && (
-            <section className="pw-section">
-              <h3 className="pw-section-title">
-                <span className="pw-icon-alert red">⛔</span> Rechazados
-              </h3>
-              <div className="pw-news-grid">
-                {rechazados.map(s => renderCard(s))}
-              </div>
-            </section>
+            <div className="pw-section">
+              <h3 className="pw-section-title">Rechazados</h3>
+              {rechazados.map(s => renderCard(s))}
+            </div>
           )}
         </>
       )}

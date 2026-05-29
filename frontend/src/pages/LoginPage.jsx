@@ -16,46 +16,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh", padding: 24 }}>
-      <div className="pw-login-card" style={{ width: "100%" }}>
-        <h2 className="pw-login-title">RutaSegura</h2>
-        <p className="pw-login-sub">Auditoría Vial Inmutable — RN 51</p>
+    <div className="pw-login-wrap">
+      <h1 className="pw-login-title">RutaSegura</h1>
+      <p className="pw-login-sub">Auditoria vial inmutable &mdash; RN 51</p>
 
-        <div className="pw-segmented" style={{ marginBottom: 20 }}>
-          <button type="button" onClick={() => { setTab("user"); setError(""); }}
-            className={`pw-seg-btn ${tab === "user" ? "pw-seg-active" : ""}`}>
-            Usuario
-          </button>
-          <button type="button" onClick={() => { setTab("admin"); setError(""); }}
-            className={`pw-seg-btn ${tab === "admin" ? "pw-seg-active" : ""}`}>
-            Admin
-          </button>
-        </div>
-
-        {error && (
-          <div className="pw-toast pw-toast-error" style={{ position: "static", transform: "none" }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <input className="pw-input" placeholder="Usuario" value={username}
-            onChange={e => setUsername(e.target.value)} required style={{ marginBottom: 10 }} />
-          <input className="pw-input" type="password" placeholder="Contraseña" value={password}
-            onChange={e => setPassword(e.target.value)} required style={{ marginBottom: 16 }} />
-          <button type="submit" className="pw-btn-primary" style={{ width: "100%" }}>
-            Ingresar
-          </button>
-        </form>
-
-        <div style={{ margin: "16px 0", textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
-          — o —
-        </div>
-
-        <button onClick={loginGuest} className="pw-btn-secondary" style={{ width: "100%" }}>
-          Entrar como Invitado
+      <div className="pw-tabs" style={{ margin: 0, marginBottom: 24 }}>
+        <button type="button" onClick={() => { setTab("user"); setError(""); }}
+          className={`pw-tab ${tab === "user" ? "pw-tab-active" : ""}`}>
+          Usuario
+        </button>
+        <button type="button" onClick={() => { setTab("admin"); setError(""); }}
+          className={`pw-tab ${tab === "admin" ? "pw-tab-active" : ""}`}>
+          Admin
         </button>
       </div>
+
+      {error && <div className="pw-toast pw-toast-error">{error}</div>}
+
+      <form onSubmit={handleSubmit}>
+        <input className="pw-input" placeholder="Usuario" value={username}
+          onChange={e => setUsername(e.target.value)} required style={{ marginBottom: 8 }} />
+        <input className="pw-input" type="password" placeholder="Contrasena" value={password}
+          onChange={e => setPassword(e.target.value)} required style={{ marginBottom: 20 }} />
+        <button type="submit" className="pw-btn-primary">Ingresar</button>
+      </form>
+
+      <div className="pw-login-divider">o</div>
+
+      <button onClick={loginGuest} className="pw-btn-secondary" style={{ display: "block", width: "100%", textAlign: "center" }}>
+        Entrar como invitado
+      </button>
     </div>
   );
 }

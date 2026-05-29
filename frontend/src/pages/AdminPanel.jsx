@@ -32,7 +32,7 @@ export default function AdminPanel() {
       await verifyReport(id, status);
       setReports((prev) => prev.map((r) => (r.reporte_id === id ? { ...r, admin_verification: status } : r)));
       const labels = { verified: "verificado", rejected: "rechazado", pending: "pendiente" };
-      setActionMsg(`Reporte ${id} → ${labels[status] || status}`);
+      setActionMsg(`Reporte ${id} marcado como ${labels[status] || status}`);
     } catch (err) {
       setActionMsg(`Error: ${err.message}`);
     }
@@ -40,38 +40,38 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <div className="pw-segmented">
+      <div className="pw-tabs">
         {[
-          { key: "pending", label: "⏳ Pendientes" },
-          { key: "verified", label: "✅ Verificados" },
-          { key: "rejected", label: "❌ Rechazados" },
+          { key: "pending", label: "Pendientes" },
+          { key: "verified", label: "Verificados" },
+          { key: "rejected", label: "Rechazados" },
           { key: "all", label: "Todos" },
         ].map((f) => (
           <button key={f.key} onClick={() => setFilter(f.key)}
-            className={`pw-seg-btn ${filter === f.key ? "pw-seg-active" : ""}`}>
+            className={`pw-tab ${filter === f.key ? "pw-tab-active" : ""}`}>
             {f.label}
           </button>
         ))}
       </div>
 
-      {actionMsg && (
-        <div className={`pw-toast ${actionMsg.startsWith("Error") ? "pw-toast-error" : "pw-toast-success"}`}
-          style={{ margin: "0 16px 12px" }}>
-          {actionMsg}
-        </div>
-      )}
+      <div style={{ padding: "16px 20px 0" }}>
+        {actionMsg && (
+          <div className={`pw-toast ${actionMsg.startsWith("Error") ? "pw-toast-error" : "pw-toast-success"}`}>
+            {actionMsg}
+          </div>
+        )}
 
-      {loading && <p style={{ textAlign: "center", color: "var(--text3)", padding: 40, fontSize: 13 }}>Cargando reportes...</p>}
+        {loading && <p style={{ fontSize: 13, color: "var(--texto-sec)", padding: 20 }}>Cargando reportes...</p>}
 
-      {!loading && filtered.length === 0 && (
-        <div className="pw-empty">
-          <span className="pw-empty-icon">📋</span>
-          <p className="pw-empty-title">Sin reportes</p>
-          <p className="pw-empty-desc">
-            No hay reportes {filter === "pending" ? "pendientes" : filter === "verified" ? "verificados" : "rechazados"}.
-          </p>
-        </div>
-      )}
+        {!loading && filtered.length === 0 && (
+          <div className="pw-empty">
+            <p className="pw-empty-title">Sin reportes</p>
+            <p className="pw-empty-desc">
+              No hay reportes {filter === "pending" ? "pendientes" : filter === "verified" ? "verificados" : "rechazados"}.
+            </p>
+          </div>
+        )}
+      </div>
 
       {filtered.map((r) => {
         const evento = r.payload?.datos_evento || {};
@@ -85,63 +85,53 @@ export default function AdminPanel() {
         const cardClass = urgency === "crítica" || urgency === "alta" ? "pw-card-critica"
           : urgency === "moderada" ? "pw-card-moderada" : "pw-card-baja";
 
-        const emoji = urgency === "crítica" || urgency === "alta" ? "🚨"
-          : urgency === "moderada" ? "⚠️" : "✅";
-
         return (
-          <div key={r.reporte_id} className={`pw-card ${cardClass}`}>
-            <div className="pw-card-inner">
-              <div className="pw-card-top">
-                <div className="pw-card-title">
-                  <span className="pw-emoji">{emoji}</span>
-                  {evento.tipo_incidente || "Sin tipo"}
-                </div>
-                <div className="pw-card-badges">
-                  {audit.clasificacion_urgencia_ia && (
-                    <span className={`pw-badge pw-badge-${urgency}`}>{audit.clasificacion_urgencia_ia}</span>
-                  )}
-                  {vStatus === "verified" && <span className="pw-badge pw-badge-aprobado">✔ Verificado</span>}
-                  {vStatus === "rejected" && <span className="pw-badge pw-badge-rechazado">✘ Rechazado</span>}
-                  {(!vStatus || vStatus === "pending") && <span className="pw-badge pw-badge-pendiente">⏳ Pendiente</span>}
-                </div>
-              </div>
-              <div className="pw-card-km">📍 Km {geo.kilometro || "?"} · RN 51</div>
-              <div className="pw-card-meta">
-                <span>👤 {meta.chofer_id || "?"}</span>
-                <span>{meta.empresa_minera || ""}</span>
-              </div>
-
-              <div style={{ fontSize: 12, color: "var(--text2)", margin: "6px 0", lineHeight: 1.4 }}>
-                {audit.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}
-              </div>
-
-              {audit.analisis_coherencia && (
-                <div className="pw-card-ai-box" style={{ margin: "6px 0" }}>
-                  <span className="pw-ai-icon">🤖</span>
-                  <span className="pw-ai-text">{audit.analisis_coherencia}</span>
-                </div>
-              )}
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text3)" }}>
-                  Score: {score}% · {r.reporte_id}
-                </span>
+          <div key={r.reporte_id} className={`pw-card ${cardClass}`} style={{ padding: "16px 20px" }}>
+            <div className="pw-card-header">
+              <span className="pw-card-title" style={{ fontSize: 15 }}>{evento.tipo_incidente || "Sin tipo"}</span>
+              <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                {audit.clasificacion_urgencia_ia && (
+                  <span className={`pw-badge pw-badge-${urgency}`}>{audit.clasificacion_urgencia_ia}</span>
+                )}
+                {vStatus === "verified" && <span className="pw-badge pw-badge-aprobado">Verificado</span>}
+                {vStatus === "rejected" && <span className="pw-badge pw-badge-rechazado">Rechazado</span>}
+                {(!vStatus || vStatus === "pending") && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
               </div>
             </div>
+            <div className="pw-card-meta">
+              <span>{meta.chofer_id || "?"} &middot; {meta.empresa_minera || ""}</span>
+              <span className="pw-card-km">Km {geo.kilometro || "?"} &middot; RN 51</span>
+            </div>
+
+            <div className="pw-score">
+              <span className="pw-score-num">{score}</span>
+              <span className="pw-score-label">score IA</span>
+              <span style={{ fontSize: 11, color: "var(--texto-sec)", marginLeft: "auto", fontFamily: "var(--font-data)" }}>
+                {r.reporte_id}
+              </span>
+            </div>
+
+            <div style={{ fontSize: 13, color: "var(--texto)", lineHeight: 1.6, margin: "4px 0" }}>
+              {audit.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripcion"}
+            </div>
+
+            {audit.analisis_coherencia && (
+              <div className="pw-ai-text">{audit.analisis_coherencia}</div>
+            )}
 
             {(!vStatus || vStatus === "pending") ? (
-              <div className="pw-card-actions" style={{ padding: "0 14px 12px" }}>
+              <div className="pw-card-actions">
                 <button onClick={() => handleVerify(r.reporte_id, "verified")} className="pw-btn-action pw-btn-verify">
-                  ✔ Verificar
+                  Verificar
                 </button>
                 <button onClick={() => handleVerify(r.reporte_id, "rejected")} className="pw-btn-action pw-btn-reject">
-                  ✘ Rechazar
+                  Rechazar
                 </button>
               </div>
             ) : (
-              <div className="pw-card-actions" style={{ padding: "0 14px 12px" }}>
-                <button onClick={() => handleVerify(r.reporte_id, "pending")} className="pw-btn-action pw-btn-pending">
-                  ↩ Volver a pendiente
+              <div className="pw-card-actions">
+                <button onClick={() => handleVerify(r.reporte_id, "pending")} className="pw-btn-action pw-btn-reset">
+                  Volver a pendiente
                 </button>
               </div>
             )}
