@@ -15,9 +15,10 @@ function authHeaders() {
   return token ? { "Authorization": `Bearer ${token}` } : {};
 }
 
-export async function getReports(tipo = "", limit = 50) {
+export async function getReports(tipo = "", limit = 50, verification = "") {
   const params = new URLSearchParams({ limit });
   if (tipo) params.set("tipo", tipo);
+  if (verification) params.set("verification", verification);
   const res = await fetch(`${BASE}/api/reports?${params}`, {
     headers: { ...authHeaders() },
   });

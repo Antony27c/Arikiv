@@ -29,7 +29,7 @@ def save_report(reporte_id, payload, audit):
     conn = _get_conn()
     try:
         conn.execute(
-            "INSERT INTO reports (reporte_id, payload, audit, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO reports (reporte_id, payload, audit, admin_verification, created_at) VALUES (?, ?, ?, 'pending', ?)",
             (reporte_id, json.dumps(payload, ensure_ascii=False), json.dumps(audit, ensure_ascii=False), datetime.utcnow().isoformat())
         )
         conn.commit()

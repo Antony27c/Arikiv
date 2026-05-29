@@ -64,17 +64,14 @@ export default function NewsFeed({ synced, pending }) {
   }
 
   useEffect(() => {
-    getReports().then((res) => {
+    getReports("", 100, "verified").then((res) => {
       setArkivReports(res.reports || []);
     }).catch(() => {});
   }, [synced.length]);
 
-  const realItems = synced.map(s => ({ ...s, _sample: false }));
-  const arkivItems = arkivReports.filter(
-    r => !realItems.some(l => l._result?.reporte_id === r.reporte_id)
-  ).map(r => parseArkivReport(r));
+  const arkivItems = arkivReports.map(r => parseArkivReport(r));
   const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
-  const all = [...arkivItems, ...realItems, ...sampleItems];
+  const all = [...arkivItems, ...sampleItems];
 
   const rechazados = all.filter(s => s._result?.status === "rechazado");
   const noRechazados = all.filter(s => s._result?.status !== "rechazado");
