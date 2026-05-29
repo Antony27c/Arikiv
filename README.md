@@ -75,6 +75,8 @@ git push
 # Railway detecta el Dockerfile en raíz y despliega todo en un servicio
 ```
 
+**App en producción:** [https://arikiv-production.up.railway.app](https://arikiv-production.up.railway.app)
+
 ## Estructura del proyecto
 
 ```
