@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import Rn51Route from "../components/Rn51Route";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getReports } from "../services/api";
@@ -201,13 +202,14 @@ export default function NewsFeed({ synced, pending }) {
           <div style={{ marginTop: 8, borderRadius: 8, overflow: "hidden", height: 220 }}>
             <MapContainer
               center={[coords.latitud, coords.longitud]}
-              zoom={14}
+              zoom={11}
               style={{ width: "100%", height: "100%" }}
               zoomControl={true}
               attributionControl={false}
             >
               <MapResize />
               <TileLayer url={tileUrl} />
+              <Rn51Route />
               <Marker position={[coords.latitud, coords.longitud]}>
                 <Popup>
                   Km {geo.kilometro || "?"} · RN 51<br />

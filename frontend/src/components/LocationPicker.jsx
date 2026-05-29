@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
+import Rn51Route from "./Rn51Route";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -56,6 +57,7 @@ export default function LocationPicker({ lat, lng, onChange, height = 300 }) {
         <CenterUpdater lat={lat} lng={lng} />
         <ClickHandler onPlace={handlePlace} />
         <TileLayer url={tileUrl} />
+        <Rn51Route />
         {hasCoords && (
           <Marker
             position={[lat, lng]}
