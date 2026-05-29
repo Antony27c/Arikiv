@@ -144,8 +144,8 @@ def list_reports(tipo: Optional[str] = None, verification: Optional[str] = None,
 
 @app.patch("/api/reports/{reporte_id}/verify")
 def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
-    if req.status not in ("verified", "rejected"):
-        raise HTTPException(status_code=400, detail="Estado inválido. Usar 'verified' o 'rejected'")
+    if req.status not in ("verified", "rejected", "pending"):
+        raise HTTPException(status_code=400, detail="Estado inválido. Usar 'verified', 'rejected' o 'pending'")
     ok = db_verify_report(reporte_id, req.status)
     if not ok:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")

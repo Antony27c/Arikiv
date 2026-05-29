@@ -41,7 +41,8 @@ export default function AdminPanel() {
       setReports((prev) =>
         prev.map((r) => (r.reporte_id === id ? { ...r, admin_verification: status } : r))
       );
-      setActionMsg(`Reporte ${id} marcado como ${status === "verified" ? "verificado" : "rechazado"}`);
+      const labels = { verified: "verificado", rejected: "rechazado", pending: "pendiente" };
+      setActionMsg(`Reporte ${id} marcado como ${labels[status] || status}`);
     } catch (err) {
       setActionMsg(`Error: ${err.message}`);
     }
@@ -117,7 +118,7 @@ export default function AdminPanel() {
                   )}
                   {vStatus === "verified" && <span style={{ fontSize: 11, color: "var(--aprobado)", fontWeight: 600 }}>✅ Verificado</span>}
                   {vStatus === "rejected" && <span style={{ fontSize: 11, color: "var(--rechazado)", fontWeight: 600 }}>❌ Rechazado</span>}
-                  {!vStatus && <span style={{ fontSize: 11, color: "var(--moderada)", fontWeight: 600 }}>⏳ Pendiente</span>}
+                  {(!vStatus || vStatus === "pending") && <span style={{ fontSize: 11, color: "var(--moderada)", fontWeight: 600 }}>⏳ Pendiente</span>}
                 </div>
               </div>
 
@@ -144,24 +145,31 @@ export default function AdminPanel() {
                 </div>
               )}
 
-              {(!vStatus || vStatus === "pending") && (
+              {(!vStatus || vStatus === "pending") ? (
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                  <button
-                    onClick={() => handleVerify(r.reporte_id, "verified")}
-                    className="pw-btn-primary"
-                    style={{ flex: 1, padding: "6px 0", fontSize: 12 }}
-                  >
+                  <button onClick={() => handleVerify(r.reporte_id, "verified")}
+                    style={{
+                      flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", borderRadius: 8, cursor: "pointer",
+                      background: "var(--aprobado)", color: "#fff",
+                    }}>
                     ✅ Verificar
                   </button>
-                  <button
-                    onClick={() => handleVerify(r.reporte_id, "rejected")}
+                  <button onClick={() => handleVerify(r.reporte_id, "rejected")}
                     style={{
-                      flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600,
-                      background: "var(--rechazado)", color: "#fff", border: "none",
-                      borderRadius: 8, cursor: "pointer",
-                    }}
-                  >
+                      flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", borderRadius: 8, cursor: "pointer",
+                      background: "var(--rechazado)", color: "#fff",
+                    }}>
                     ❌ Rechazar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button onClick={() => handleVerify(r.reporte_id, "pending")}
+                    style={{
+                      flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 600, border: "none", borderRadius: 8, cursor: "pointer",
+                      background: "var(--moderada)", color: "#fff",
+                    }}>
+                    ↩️ Pendiente
                   </button>
                 </div>
               )}
