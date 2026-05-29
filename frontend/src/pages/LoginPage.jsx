@@ -58,15 +58,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {tab === "user" && (
-          <div style={{ marginTop: 12, fontSize: 12, color: "var(--texto-secundario)", textAlign: "center" }}>
-            <p style={{ marginBottom: 4 }}>Usuarios de prueba:</p>
-            <code style={{ fontSize: 11 }}>cgomez / pass123</code> &middot;
-            <code style={{ fontSize: 11 }}> mlopez / pass123</code> &middot;
-            <code style={{ fontSize: 11 }}> jperez / pass123</code>
-          </div>
-        )}
-
         <div style={{ margin: "16px 0", textAlign: "center", color: "var(--texto-secundario)", fontSize: 12 }}>
           — o —
         </div>
