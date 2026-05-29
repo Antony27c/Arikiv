@@ -46,10 +46,7 @@ export default function LoginPage() {
           Entrar como Invitado
         </button>
 
-        <div style={{ marginTop: 16, fontSize: 12, color: "var(--texto-secundario)", textAlign: "center" }}>
-          <p style={{ marginBottom: 4 }}>Admin de prueba:</p>
-          <code style={{ fontSize: 11 }}>admin / admin123</code>
-        </div>
+
       </div>
     </div>
   );
