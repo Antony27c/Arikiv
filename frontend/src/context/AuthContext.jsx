@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
@@ -21,7 +21,22 @@ const GUEST_USER = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("rutasegura_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("rutasegura_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("rutasegura_user");
+    }
+  }, [user]);
 
   function loginUser(username, password) {
     const found = USERS.find(u => u.username === username && u.password === password);
