@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import NewsFeed from "./pages/NewsFeed";
 import ReportPage from "./pages/ReportPage";
 import LoginPage from "./pages/LoginPage";
+import AdminPanel from "./pages/AdminPanel";
 
 function AppContent() {
   const { user, logout } = useAuth();
@@ -60,9 +61,14 @@ function AppContent() {
         <NavLink to="/" end className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
           <span className="pw-nav-label">📰 Noticias</span>
         </NavLink>
-        {user.isAdmin && (
+        {user.role !== "guest" && (
           <NavLink to="/reportar" className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
             <span className="pw-nav-label">🚨 Reportar</span>
+          </NavLink>
+        )}
+        {user.isAdmin && (
+          <NavLink to="/admin" className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
+            <span className="pw-nav-label">🛡️ Moderar</span>
           </NavLink>
         )}
       </nav>
@@ -70,7 +76,8 @@ function AppContent() {
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<NewsFeed synced={synced} pending={pending} />} />
-          {user.isAdmin && <Route path="/reportar" element={<ReportPage onSave={enqueue} />} />}
+          {user.role !== "guest" && <Route path="/reportar" element={<ReportPage onSave={enqueue} />} />}
+          {user.isAdmin && <Route path="/admin" element={<AdminPanel />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -88,11 +95,20 @@ function AppContent() {
             </span>
           )}
         </NavLink>
-        {user.isAdmin && (
+          {user.role !== "guest" && (
           <NavLink to="/reportar" style={navLinkStyle} className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
             {({ isActive }) => (
               <span className="pw-nav-label" style={{ color: isActive ? "var(--bordo)" : "var(--texto-secundario)" }}>
                 🚨 Reportar
+              </span>
+            )}
+          </NavLink>
+        )}
+        {user.isAdmin && (
+          <NavLink to="/admin" style={navLinkStyle} className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
+            {({ isActive }) => (
+              <span className="pw-nav-label" style={{ color: isActive ? "var(--bordo)" : "var(--texto-secundario)" }}>
+                🛡️ Moderar
               </span>
             )}
           </NavLink>

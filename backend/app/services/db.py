@@ -14,9 +14,14 @@ def _get_conn():
             reporte_id TEXT UNIQUE,
             payload TEXT NOT NULL,
             audit TEXT NOT NULL,
+            admin_verification TEXT DEFAULT NULL,
             created_at TEXT NOT NULL
         )
     """)
+    try:
+        conn.execute("ALTER TABLE reports ADD COLUMN admin_verification TEXT DEFAULT NULL")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     return conn
 
@@ -34,19 +39,38 @@ def save_report(reporte_id, payload, audit):
     finally:
         conn.close()
 
-def list_reports(limit=50, tipo=None):
+def verify_report(reporte_id, status):
     conn = _get_conn()
     try:
+        cur = conn.execute(
+            "UPDATE reports SET admin_verification = ? WHERE reporte_id = ?",
+            (status, reporte_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+def list_reports(limit=50, tipo=None, verification=None):
+    conn = _get_conn()
+    try:
+        sql = "SELECT * FROM reports"
+        params = []
+        conditions = []
         if tipo:
-            rows = conn.execute(
-                "SELECT * FROM reports WHERE json_extract(payload, '$.datos_evento.tipo_incidente') = ? ORDER BY id DESC LIMIT ?",
-                (tipo, limit)
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                "SELECT * FROM reports ORDER BY id DESC LIMIT ?",
-                (limit,)
-            ).fetchall()
+            conditions.append("json_extract(payload, '$.datos_evento.tipo_incidente') = ?")
+            params.append(tipo)
+        if verification == "pending":
+            conditions.append("admin_verification IS NULL")
+        elif verification == "verified":
+            conditions.append("admin_verification = 'verified'")
+        elif verification == "rejected":
+            conditions.append("admin_verification = 'rejected'")
+        if conditions:
+            sql += " WHERE " + " AND ".join(conditions)
+        sql += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
         result = []
         for r in rows:
             result.append({
@@ -54,6 +78,7 @@ def list_reports(limit=50, tipo=None):
                 "reporte_id": r["reporte_id"],
                 "payload": json.loads(r["payload"]),
                 "audit": json.loads(r["audit"]),
+                "admin_verification": r["admin_verification"],
                 "created_at": r["created_at"],
             })
         return result

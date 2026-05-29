@@ -121,5 +121,5 @@ def store_report(report, audit, reporte_id=None):
     result["reporte_id"] = reporte_id
     return result
 
-def query_reports(tipo=None, limit=50):
-    return db_list_reports(limit=limit, tipo=tipo)
+def query_reports(tipo=None, limit=50, verification=None):
+    return db_list_reports(limit=limit, tipo=tipo, verification=verification)

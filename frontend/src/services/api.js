@@ -37,3 +37,16 @@ export async function submitReport(data) {
   }
   return res.json();
 }
+
+export async function verifyReport(reporteId, status) {
+  const res = await fetch(`${BASE}/api/reports/${reporteId}/verify`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

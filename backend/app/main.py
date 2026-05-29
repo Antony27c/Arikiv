@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report, query_reports
 from app.services.auth import authenticate, create_token, verify_token, register_driver, get_driver_by_id
+from app.services.db import verify_report as db_verify_report
 
 app = FastAPI(title="RutaSegura API", version="0.1.0")
 
@@ -96,6 +97,9 @@ class RegisterRequest(BaseModel):
     password: str
     empresa: str = ""
 
+class VerifyRequest(BaseModel):
+    status: str
+
 def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Token requerido")
@@ -134,9 +138,18 @@ def register(req: RegisterRequest):
     )
 
 @app.get("/api/reports")
-def list_reports(tipo: Optional[str] = None, limit: int = 50):
-    data = query_reports(tipo=tipo, limit=limit)
+def list_reports(tipo: Optional[str] = None, verification: Optional[str] = None, limit: int = 50):
+    data = query_reports(tipo=tipo, limit=limit, verification=verification)
     return {"reports": data, "count": len(data)}
+
+@app.patch("/api/reports/{reporte_id}/verify")
+def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
+    if req.status not in ("verified", "rejected"):
+        raise HTTPException(status_code=400, detail="Estado inválido. Usar 'verified' o 'rejected'")
+    ok = db_verify_report(reporte_id, req.status)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    return {"status": "ok", "reporte_id": reporte_id, "admin_verification": req.status}
 
 @app.get("/api/health")
 def health():
