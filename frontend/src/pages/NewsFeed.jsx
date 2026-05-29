@@ -80,8 +80,11 @@ export default function NewsFeed({ synced, pending }) {
   }, [synced.length]);
 
   const arkivItems = arkivReports.map(r => parseArkivReport(r));
+  const syncedItems = synced.filter(
+    s => !arkivItems.some(a => a._id === s._result?.reporte_id)
+  ).map(s => ({ ...s, _synced: true }));
   const sampleItems = sampleNews.map(s => ({ ...s, _sample: true }));
-  const all = [...arkivItems, ...sampleItems];
+  const all = [...arkivItems, ...syncedItems, ...sampleItems];
 
   const rechazados = all.filter(s => s._result?.status === "rechazado");
   const noRechazados = all.filter(s => s._result?.status !== "rechazado");
@@ -134,6 +137,14 @@ export default function NewsFeed({ synced, pending }) {
                 background: "var(--fondo)", color: "var(--texto-secundario)", fontWeight: 500,
               }}>
                 EJEMPLO
+              </span>
+            )}
+            {s._synced && (
+              <span style={{
+                fontSize: 9, padding: "1px 6px", borderRadius: 8,
+                background: "var(--moderada)", color: "#fff", fontWeight: 500,
+              }}>
+                PENDIENTE
               </span>
             )}
           </div>
