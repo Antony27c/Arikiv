@@ -16,39 +16,50 @@ function AppContent() {
 
   return (
     <div className="pw-wrapper">
-      <div className="pw-side-mountain" />
       <header className="pw-header">
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginBottom: 2 }}>
-          <h1>RutaSegura</h1>
-          <span className={`pw-online-dot ${online ? "online" : "offline"}`} />
+        <div className="pw-header-left">
+          <span className="pw-logo">RutaSegura</span>
+          <span className="pw-chip">RN 51</span>
         </div>
-        <p className="subtitle">Auditoría Vial Inmutable — RN 51</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, fontSize: 13, color: "var(--texto-secundario)", marginBottom: 4 }}>
-          <span>{user.nombre} ({user.chofer_id})</span>
-          <button onClick={logout} style={{
-            background: "none", border: "none", cursor: "pointer", fontSize: 12,
-            color: "var(--bordo)", fontWeight: 600, padding: 0, textDecoration: "underline",
-          }}>
-            Salir
-          </button>
-        </div>
-        {user.isAdmin && (
-          <div className="pw-stats">
-            <span>&#128337; {pending.length} pendientes</span>
-            <span>&#9989; {synced.length} sincronizados</span>
+        <div className="pw-header-right">
+          <div className="pw-header-stats">
+            {user.isAdmin && <span>↑{pending.length}</span>}
+            {user.isAdmin && <span>✓{synced.length}</span>}
           </div>
-        )}
-        {user.isAdmin && pending.length > 0 && online && (
-          <button onClick={sync} disabled={syncing} className="pw-sync-btn">
-            {syncing ? "Sincronizando..." : `Sincronizar ${pending.length} reportes`}
+          <span className={`pw-dot ${online ? "online" : "offline"}`} />
+          <button onClick={logout} style={{
+            background: "var(--surface2)", border: "1px solid var(--border)", cursor: "pointer",
+            fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 20,
+            color: "var(--text2)", transition: "all 0.2s",
+          }}>
+            {user.nombre}
           </button>
-        )}
-        {user.isAdmin && synced.length > 0 && (
-          <button onClick={clearSynced} className="pw-sync-btn" style={{ background: "var(--rechazado)" }}>
-            Limpiar {synced.length} reportes fallidos
-          </button>
-        )}
+        </div>
       </header>
+      {user.isAdmin && pending.length > 0 && online && (
+        <div style={{ padding: "6px 16px" }}>
+          <button onClick={sync} disabled={syncing}
+            style={{
+              width: "100%", padding: "8px", fontSize: 12, fontWeight: 700,
+              background: "var(--yellow)", color: "#000", border: "none",
+              borderRadius: "var(--radius-xs)", cursor: "pointer",
+            }}>
+            {syncing ? "Sincronizando..." : `Sincronizar ${pending.length} reportes pendientes`}
+          </button>
+        </div>
+      )}
+      {user.isAdmin && synced.length > 0 && (
+        <div style={{ padding: "4px 16px" }}>
+          <button onClick={clearSynced}
+            style={{
+              width: "100%", padding: "6px", fontSize: 11, fontWeight: 600,
+              background: "transparent", color: "var(--red)", border: "1px solid rgba(255,59,59,0.3)",
+              borderRadius: "var(--radius-xs)", cursor: "pointer",
+            }}>
+            Limpiar {synced.length} fallidos
+          </button>
+        </div>
+      )}
 
       {/* Desktop navigation */}
       <nav className="pw-desktop-nav">

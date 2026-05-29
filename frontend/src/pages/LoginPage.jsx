@@ -16,20 +16,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "70vh", padding: 20 }}>
-      <div className="pw-form pw-login-card">
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh", padding: 24 }}>
+      <div className="pw-login-card" style={{ width: "100%" }}>
         <h2 className="pw-login-title">RutaSegura</h2>
-        <p style={{ textAlign: "center", fontSize: 13, color: "var(--texto-secundario)", marginBottom: 12 }}>
-          Auditoría Vial Inmutable — RN 51
-        </p>
+        <p className="pw-login-sub">Auditoría Vial Inmutable — RN 51</p>
 
-        <div className="pw-pills">
+        <div className="pw-segmented" style={{ marginBottom: 20 }}>
           <button type="button" onClick={() => { setTab("user"); setError(""); }}
-            className={`pw-pill ${tab === "user" ? "pw-pill-active" : ""}`}>
+            className={`pw-seg-btn ${tab === "user" ? "pw-seg-active" : ""}`}>
             Usuario
           </button>
           <button type="button" onClick={() => { setTab("admin"); setError(""); }}
-            className={`pw-pill ${tab === "admin" ? "pw-pill-active" : ""}`}>
+            className={`pw-seg-btn ${tab === "admin" ? "pw-seg-active" : ""}`}>
             Admin
           </button>
         </div>
@@ -42,7 +40,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <input className="pw-input" placeholder="Usuario" value={username}
-            onChange={e => setUsername(e.target.value)} required style={{ marginBottom: 8 }} />
+            onChange={e => setUsername(e.target.value)} required style={{ marginBottom: 10 }} />
           <input className="pw-input" type="password" placeholder="Contraseña" value={password}
             onChange={e => setPassword(e.target.value)} required style={{ marginBottom: 16 }} />
           <button type="submit" className="pw-btn-primary" style={{ width: "100%" }}>
@@ -50,7 +48,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ margin: "16px 0", textAlign: "center", color: "var(--texto-secundario)", fontSize: 12 }}>
+        <div style={{ margin: "16px 0", textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
           — o —
         </div>
 

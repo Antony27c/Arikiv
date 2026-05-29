@@ -46,12 +46,12 @@ export default function LocationPicker({ lat, lng, onChange, height = 300 }) {
   }
 
   return (
-    <div style={{ borderRadius: 8, overflow: "hidden", height, border: "1px solid var(--borde)" }}>
+    <div style={{ height, background: "var(--surface2)" }}>
       <MapContainer
         center={center}
         zoom={14}
         style={{ width: "100%", height: "100%" }}
-        zoomControl={true}
+        zoomControl={false}
         attributionControl={false}
       >
         <CenterUpdater lat={lat} lng={lng} />
