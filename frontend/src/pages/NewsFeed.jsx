@@ -63,10 +63,20 @@ export default function NewsFeed({ synced, pending }) {
     });
   }
 
-  useEffect(() => {
+  function fetchVerified() {
     getReports("", 100, "verified").then((res) => {
       setArkivReports(res.reports || []);
     }).catch(() => {});
+  }
+
+  useEffect(() => {
+    fetchVerified();
+    const interval = setInterval(fetchVerified, 30000);
+    window.addEventListener("focus", fetchVerified);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", fetchVerified);
+    };
   }, [synced.length]);
 
   const arkivItems = arkivReports.map(r => parseArkivReport(r));
