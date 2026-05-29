@@ -168,9 +168,7 @@ def icons():
     return FileResponse("static/icons.svg")
 
 @app.post("/api/reports", response_model=ReportResponse)
-def submit_report(report: Report, user: dict = Depends(get_current_user)):
-    if report.metadata_origen.chofer_id != user["chofer_id"]:
-        raise HTTPException(status_code=403, detail="El chofer_id del reporte no coincide con el usuario autenticado")
+def submit_report(report: Report):
     reporte_id = report.reporte_id or f"RP-{int(datetime.now().timestamp())}"
     data = report.model_dump()
     audit = audit_report(data)
