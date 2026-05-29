@@ -114,40 +114,30 @@ export default function NewsFeed({ synced, pending }) {
     const hasCoords = coords?.latitud && coords?.longitud;
     const mapOpen = openMaps.has(s._id);
     const tileUrl = import.meta.env.VITE_MAP_TILE_URL || "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+    const urgency = v?.clasificacion_urgencia_ia?.toLowerCase() || "";
+    const score = Math.round((v?.score_confianza_geografica || 0) * 100);
+
+    const priorityBorder = urgency === "crítica" || urgency === "alta" ? "var(--critica)"
+      : urgency === "moderada" ? "var(--moderada)"
+      : "var(--baja)";
 
     return (
-      <div key={s._id} className="pw-card" style={{
-        borderLeftColor: statusColors[statusKey] || "var(--aprobado)",
-      }}>
+      <div key={s._id} className="pw-card" style={{ borderLeftColor: priorityBorder }}>
         <div className="pw-card-header">
-          <strong style={{ fontSize: 13, color: statusColors[statusKey] || "var(--aprobado)" }}>
+          <strong style={{ fontSize: 13 }}>
             {evento.tipo_incidente || "Incidente"}
           </strong>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             {v?.clasificacion_urgencia_ia && (
-              <span className={`status-badge status-badge-${v.clasificacion_urgencia_ia.toLowerCase()}`}>
+              <span className={`pw-priority pw-priority-${urgency}`}>
                 {v.clasificacion_urgencia_ia}
               </span>
             )}
-            <span className={`verification-badge verification-badge-${statusKey}`}>
+            <span className={`pw-verify pw-verify-${statusKey}`}>
               {statusKey === "aprobado" ? "APROBADO" : "RECHAZADO"}
             </span>
-            {s._sample && (
-              <span style={{
-                fontSize: 9, padding: "1px 6px", borderRadius: 8,
-                background: "var(--fondo)", color: "var(--texto-secundario)", fontWeight: 500,
-              }}>
-                EJEMPLO
-              </span>
-            )}
-            {s._synced && (
-              <span style={{
-                fontSize: 9, padding: "1px 6px", borderRadius: 8,
-                background: "var(--moderada)", color: "#fff", fontWeight: 500,
-              }}>
-                PENDIENTE
-              </span>
-            )}
+            {s._sample && <span className="pw-tag">EJEMPLO</span>}
+            {s._synced && <span className="pw-tag pw-tag-bordo">PENDIENTE</span>}
           </div>
         </div>
 
@@ -155,44 +145,52 @@ export default function NewsFeed({ synced, pending }) {
           {v?.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}
         </div>
 
-        <div className="pw-card-body" style={{ fontSize: 12 }}>
+        <div className="pw-card-body">
           <span>{meta.chofer_id}{meta.empresa_minera ? ` · ${meta.empresa_minera}` : ""}</span>
           <span>Km {geo.kilometro || "?"} · RN 51</span>
         </div>
 
         {v?.direccion && (
-          <div style={{ fontSize: 11, color: "var(--texto-secundario)", marginBottom: 4, lineHeight: 1.4, padding: "4px 0", borderTop: "1px solid var(--borde)", marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: "var(--texto-secundario)", padding: "4px 0" }}>
             📍 {v.direccion}
           </div>
         )}
 
+        <div className="pw-score-bar">
+          <span style={{ fontSize: 11, color: "var(--texto-secundario)", minWidth: 45 }}>
+            {score}%
+          </span>
+          <div className="pw-score-track">
+            <div className="pw-score-fill" style={{
+              width: `${score}%`,
+              background: score >= 80 ? "var(--verde-confirmacion)" : score >= 50 ? "var(--moderada)" : "var(--critica)",
+            }} />
+          </div>
+          {v?.distancia_ruta_km !== undefined && v?.distancia_ruta_km !== null && (
+            <span style={{ fontSize: 10, color: "var(--texto-secundario)", minWidth: 70, textAlign: "right" }}>
+              {v.distancia_ruta_km} km
+            </span>
+          )}
+        </div>
+
         {v?.analisis_coherencia && (
-          <div className="pw-card-footer" style={{
-            color: statusKey === "aprobado" ? "var(--aprobado)" : "var(--rechazado)",
-            fontWeight: 500,
-          }}>
+          <div className="pw-card-footer">
             {v.analisis_coherencia}
           </div>
         )}
 
-        <div className="pw-card-body" style={{ marginTop: 6, fontSize: 11, color: "var(--texto-secundario)", alignItems: "center" }}>
-          <span>
-            Score: {Math.round((v?.score_confianza_geografica || 0) * 100)}%
-            {v?.distancia_ruta_km !== undefined && v?.distancia_ruta_km !== null && (
-              <span style={{ marginLeft: 8, opacity: 0.7 }}>
-                · {v.distancia_ruta_km} km de RN 51
-              </span>
-            )}
+        <div className="pw-card-body" style={{ marginTop: 8, alignItems: "center" }}>
+          <span style={{ fontSize: 11 }}>
+            {a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}
           </span>
           <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            {a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}
             {hasCoords && (
               <button onClick={() => toggleMap(s._id)} style={{
                 background: "none", border: "1px solid var(--borde)", borderRadius: 6,
-                padding: "4px 8px", fontSize: 11, cursor: "pointer", fontWeight: 500,
+                padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: 500,
                 color: mapOpen ? "var(--bordo)" : "var(--texto-secundario)",
               }}>
-                {mapOpen ? "✕ Cerrar mapa" : "📍 Mapa"}
+                {mapOpen ? "✕" : "📍"} Mapa
               </button>
             )}
           </span>
@@ -261,40 +259,46 @@ export default function NewsFeed({ synced, pending }) {
             <div className="pw-news-grid">
               {altaPrioridad.map(s => renderCard(s))}
               {altaPrioridad.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de alta prioridad.</p>
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", padding: 12 }}>Sin incidentes de alta prioridad.</p>
               )}
             </div>
           </section>
+
+          <div className="pw-section-divider" />
 
           <section className="pw-section">
             <h3 className="pw-section-title">🟡 Prioridad moderada</h3>
             <div className="pw-news-grid">
               {prioridadModerada.map(s => renderCard(s))}
               {prioridadModerada.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de prioridad moderada.</p>
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", padding: 12 }}>Sin incidentes de prioridad moderada.</p>
               )}
             </div>
           </section>
+
+          <div className="pw-section-divider" />
 
           <section className="pw-section">
             <h3 className="pw-section-title">🟢 Baja prioridad</h3>
             <div className="pw-news-grid">
               {bajaPrioridad.map(s => renderCard(s))}
               {bajaPrioridad.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes de baja prioridad.</p>
+                <p style={{ fontSize: 13, color: "var(--texto-secundario)", padding: 12 }}>Sin incidentes de baja prioridad.</p>
               )}
             </div>
           </section>
 
-          <section className="pw-section">
-            <h3 className="pw-section-title">⛔ Rechazados</h3>
-            <div className="pw-news-grid">
-              {rechazados.map(s => renderCard(s))}
-              {rechazados.length === 0 && (
-                <p style={{ fontSize: 13, color: "var(--texto-secundario)", gridColumn: "1 / -1" }}>Sin incidentes rechazados.</p>
-              )}
-            </div>
-          </section>
+          {rechazados.length > 0 && (
+            <>
+              <div className="pw-section-divider" />
+              <section className="pw-section">
+                <h3 className="pw-section-title">⛔ Rechazados</h3>
+                <div className="pw-news-grid">
+                  {rechazados.map(s => renderCard(s))}
+                </div>
+              </section>
+            </>
+          )}
         </>
       )}
     </div>

@@ -150,78 +150,75 @@ export default function ReportForm({ onSave, user }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="pw-form">
-      <h2>Nuevo Reporte Vial</h2>
-
-      <div className="pw-form-grid">
-        <div className="pw-block">
-          <h3 className="pw-block-title">Chofer / Empresa</h3>
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="pw-block">
+        <h3 className="pw-block-title">🚛 Chofer / Empresa</h3>
+        <AutocompleteInput
+          placeholder="ID del Chofer *"
+          value={form.chofer_id}
+          onChange={set("chofer_id")}
+          suggestions={[]}
+          historyKey="chofer"
+          required
+        />
+        <div className="pw-row" style={{ flexWrap: "wrap" }}>
           <AutocompleteInput
-            placeholder="ID del Chofer *"
-            value={form.chofer_id}
-            onChange={set("chofer_id")}
+            placeholder="Empresa minera"
+            value={form.empresa_minera}
+            onChange={set("empresa_minera")}
+            suggestions={Empresas}
+            historyKey="empresa"
+            style={{ flex: "1 1 140px" }}
+          />
+          <AutocompleteInput
+            placeholder="Patente"
+            value={form.patente_camion}
+            onChange={set("patente_camion")}
             suggestions={[]}
-            historyKey="chofer"
-            required
+            historyKey="patente"
+            style={{ flex: "1 1 120px" }}
           />
-          <div className="pw-row" style={{ flexWrap: "wrap" }}>
-            <AutocompleteInput
-              placeholder="Empresa minera"
-              value={form.empresa_minera}
-              onChange={set("empresa_minera")}
-              suggestions={Empresas}
-              historyKey="empresa"
-              style={{ flex: "1 1 140px" }}
-            />
-            <AutocompleteInput
-              placeholder="Patente"
-              value={form.patente_camion}
-              onChange={set("patente_camion")}
-              suggestions={[]}
-              historyKey="patente"
-              style={{ flex: "1 1 120px" }}
-            />
-          </div>
         </div>
+      </div>
 
-        <div className="pw-block">
-          <h3 className="pw-block-title">Ubicación</h3>
-          <div className="pw-row" style={{ flexWrap: "wrap", gap: 8 }}>
-            <input className="pw-input" placeholder="Latitud *" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
-            <input className="pw-input" placeholder="Longitud *" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
-            <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "0 1 auto", whiteSpace: "nowrap" }}>
-              {geoStatus || "📍 GPS"}
-            </button>
-          </div>
-          <LocationPicker
-            lat={form.latitud ? parseFloat(form.latitud) : null}
-            lng={form.longitud ? parseFloat(form.longitud) : null}
-            onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))}
-            height={260}
+      <div className="pw-block">
+        <h3 className="pw-block-title">📍 Ubicación</h3>
+        <button type="button" onClick={getLocation} className="pw-gps-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          {geoStatus || "Obtener ubicación actual"}
+        </button>
+        <div className="pw-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <input className="pw-input" placeholder="Latitud *" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
+          <input className="pw-input" placeholder="Longitud *" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
+        </div>
+        <LocationPicker
+          lat={form.latitud ? parseFloat(form.latitud) : null}
+          lng={form.longitud ? parseFloat(form.longitud) : null}
+          onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))}
+          height={260}
+        />
+        <div className="pw-row" style={{ flexWrap: "wrap", marginTop: 4 }}>
+          <AutocompleteInput
+            placeholder="Km aproximado"
+            value={form.kilometro}
+            onChange={set("kilometro")}
+            suggestions={KmsSugeridos}
+            historyKey="kilometro"
+            type="number"
+            style={{ flex: "0 1 120px" }}
           />
-          <div className="pw-row" style={{ flexWrap: "wrap", marginTop: 8 }}>
-            <AutocompleteInput
-              placeholder="Km"
-              value={form.kilometro}
-              onChange={set("kilometro")}
-              suggestions={KmsSugeridos}
-              historyKey="kilometro"
-              type="number"
-              style={{ flex: "0 1 100px" }}
-            />
-          </div>
         </div>
+      </div>
 
-        <div className="pw-block pw-full-width">
-          <h3 className="pw-block-title">Incidente</h3>
-          <select className="pw-input" value={form.tipo_incidente} onChange={set("tipo_incidente")}>
-            <option value="">Tipo de incidente *</option>
-            {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <textarea className="pw-input" placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} />
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
-          {photo && <img src={photo} alt="preview" className="pw-preview" />}
-        </div>
+      <div className="pw-block">
+        <h3 className="pw-block-title">⚠️ Incidente</h3>
+        <select className="pw-input" value={form.tipo_incidente} onChange={set("tipo_incidente")}>
+          <option value="">Tipo de incidente *</option>
+          {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <textarea className="pw-input" placeholder="Descripción del chofer" value={form.descripcion_chofer} onChange={set("descripcion_chofer")} rows={3} />
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
+        {photo && <img src={photo} alt="preview" className="pw-preview" />}
       </div>
 
       <button type="submit" className="pw-btn-primary">Guardar Localmente</button>

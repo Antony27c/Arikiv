@@ -23,31 +23,19 @@ export default function LoginPage() {
           Auditoría Vial Inmutable — RN 51
         </p>
 
-        <div style={{ display: "flex", marginBottom: 16, borderRadius: 10, overflow: "hidden", border: "1px solid var(--borde)", padding: 3, background: "var(--fondo)" }}>
+        <div className="pw-pills">
           <button type="button" onClick={() => { setTab("user"); setError(""); }}
-            style={{
-              flex: 1, padding: "10px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14,
-              background: tab === "user" ? "var(--blanco)" : "transparent",
-              color: tab === "user" ? "var(--bordo)" : "var(--texto-secundario)",
-              borderRadius: 8, transition: "all 0.2s ease",
-              boxShadow: tab === "user" ? "var(--sombra)" : "none",
-            }}>
+            className={`pw-pill ${tab === "user" ? "pw-pill-active" : ""}`}>
             Usuario
           </button>
           <button type="button" onClick={() => { setTab("admin"); setError(""); }}
-            style={{
-              flex: 1, padding: "10px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14,
-              background: tab === "admin" ? "var(--blanco)" : "transparent",
-              color: tab === "admin" ? "var(--bordo)" : "var(--texto-secundario)",
-              borderRadius: 8, transition: "all 0.2s ease",
-              boxShadow: tab === "admin" ? "var(--sombra)" : "none",
-            }}>
+            className={`pw-pill ${tab === "admin" ? "pw-pill-active" : ""}`}>
             Admin
           </button>
         </div>
 
         {error && (
-          <div style={{ background: "var(--critica)", color: "#fff", padding: "8px 12px", borderRadius: 8, marginBottom: 12, fontSize: 13 }}>
+          <div className="pw-toast pw-toast-error" style={{ position: "static", transform: "none" }}>
             {error}
           </div>
         )}

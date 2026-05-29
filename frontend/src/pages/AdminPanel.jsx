@@ -50,7 +50,7 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: "flex", gap: 6, flexWrap: "wrap", padding: 4, background: "var(--fondo)", borderRadius: 10 }}>
+      <div className="pw-pills">
         {[
           { key: "pending", label: "⏳ Pendientes" },
           { key: "verified", label: "✅ Verificados" },
@@ -60,14 +60,7 @@ export default function AdminPanel() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            style={{
-              flex: 1, minWidth: 80, padding: "8px 12px", fontSize: 12, fontWeight: 600,
-              background: filter === f.key ? "var(--blanco)" : "transparent",
-              color: filter === f.key ? "var(--bordo)" : "var(--texto-secundario)",
-              border: "none", borderRadius: 8, cursor: "pointer",
-              boxShadow: filter === f.key ? "var(--sombra)" : "none",
-              transition: "all 0.2s ease",
-            }}
+            className={`pw-pill ${filter === f.key ? "pw-pill-active" : ""}`}
           >
             {f.label}
           </button>
@@ -84,9 +77,10 @@ export default function AdminPanel() {
       {loading && <p style={{ textAlign: "center", color: "var(--texto-secundario)", padding: 20 }}>Cargando reportes...</p>}
 
       {!loading && filtered.length === 0 && (
-        <div className="pw-card pw-empty-state">
-          <p style={{ fontSize: 32, marginBottom: 8 }}>📋</p>
-          <p style={{ color: "var(--texto-secundario)", fontSize: 14 }}>
+        <div className="pw-empty">
+          <span className="pw-empty-icon">📋</span>
+          <p className="pw-empty-title">Sin reportes</p>
+          <p className="pw-empty-desc">
             No hay reportes {filter === "pending" ? "pendientes" : filter === "verified" ? "verificados" : "rechazados"}.
           </p>
         </div>
@@ -110,13 +104,13 @@ export default function AdminPanel() {
                 </strong>
                 <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                   {audit.clasificacion_urgencia_ia && (
-                    <span className={`status-badge status-badge-${audit.clasificacion_urgencia_ia.toLowerCase()}`}>
+                    <span className={`pw-priority pw-priority-${audit.clasificacion_urgencia_ia.toLowerCase()}`}>
                       {audit.clasificacion_urgencia_ia}
                     </span>
                   )}
-                  {vStatus === "verified" && <span style={{ fontSize: 11, color: "var(--aprobado)", fontWeight: 600 }}>✅ Verificado</span>}
-                  {vStatus === "rejected" && <span style={{ fontSize: 11, color: "var(--rechazado)", fontWeight: 600 }}>❌ Rechazado</span>}
-                  {(!vStatus || vStatus === "pending") && <span style={{ fontSize: 11, color: "var(--moderada)", fontWeight: 600 }}>⏳ Pendiente</span>}
+                  {vStatus === "verified" && <span className="pw-verify pw-verify-aprobado">✅ Verificado</span>}
+                  {vStatus === "rejected" && <span className="pw-verify pw-verify-rechazado">❌ Rechazado</span>}
+                  {(!vStatus || vStatus === "pending") && <span className="pw-tag pw-tag-bordo">⏳ Pendiente</span>}
                 </div>
               </div>
 
