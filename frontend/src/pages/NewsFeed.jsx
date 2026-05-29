@@ -237,10 +237,10 @@ export default function NewsFeed({ synced, pending }) {
         <section className="pw-section">
           <h3 className="pw-section-title">Pendientes de envío</h3>
           {pending.map((p) => (
-            <div key={p._id} className="pw-card" style={{ borderLeftColor: "var(--moderada)", opacity: 0.8 }}>
+            <div key={p._id} className="pw-card pw-card-shadow-hover" style={{ borderLeftColor: "var(--moderada)", opacity: 0.85 }}>
               <div className="pw-card-header">
                 <strong style={{ fontSize: 13 }}>{p.metadata_origen?.chofer_id}</strong>
-                <span style={{ fontSize: 11, color: "var(--moderada)", fontWeight: 600 }}>OFFLINE</span>
+                <span className="pw-tag pw-tag-bordo">⏳ OFFLINE</span>
               </div>
               <div className="pw-card-body">
                 <span>{p.datos_evento?.tipo_incidente}</span>

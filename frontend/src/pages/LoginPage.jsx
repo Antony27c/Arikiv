@@ -16,27 +16,31 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh", padding: 20 }}>
-      <div className="pw-form" style={{ maxWidth: 400, width: "100%" }}>
-        <h2 style={{ textAlign: "center", marginBottom: 4 }}>RutaSegura</h2>
-        <p style={{ textAlign: "center", fontSize: 13, color: "var(--texto-secundario)", marginBottom: 20 }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "70vh", padding: 20 }}>
+      <div className="pw-form pw-login-card">
+        <h2 className="pw-login-title">RutaSegura</h2>
+        <p style={{ textAlign: "center", fontSize: 13, color: "var(--texto-secundario)", marginBottom: 12 }}>
           Auditoría Vial Inmutable — RN 51
         </p>
 
-        <div style={{ display: "flex", marginBottom: 16, borderRadius: 8, overflow: "hidden", border: "1px solid var(--borde)" }}>
+        <div style={{ display: "flex", marginBottom: 16, borderRadius: 10, overflow: "hidden", border: "1px solid var(--borde)", padding: 3, background: "var(--fondo)" }}>
           <button type="button" onClick={() => { setTab("user"); setError(""); }}
             style={{
               flex: 1, padding: "10px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14,
-              background: tab === "user" ? "var(--bordo)" : "var(--fondo)",
-              color: tab === "user" ? "#fff" : "var(--texto-secundario)",
+              background: tab === "user" ? "var(--blanco)" : "transparent",
+              color: tab === "user" ? "var(--bordo)" : "var(--texto-secundario)",
+              borderRadius: 8, transition: "all 0.2s ease",
+              boxShadow: tab === "user" ? "var(--sombra)" : "none",
             }}>
             Usuario
           </button>
           <button type="button" onClick={() => { setTab("admin"); setError(""); }}
             style={{
               flex: 1, padding: "10px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14,
-              background: tab === "admin" ? "var(--bordo)" : "var(--fondo)",
-              color: tab === "admin" ? "#fff" : "var(--texto-secundario)",
+              background: tab === "admin" ? "var(--blanco)" : "transparent",
+              color: tab === "admin" ? "var(--bordo)" : "var(--texto-secundario)",
+              borderRadius: 8, transition: "all 0.2s ease",
+              boxShadow: tab === "admin" ? "var(--sombra)" : "none",
             }}>
             Admin
           </button>

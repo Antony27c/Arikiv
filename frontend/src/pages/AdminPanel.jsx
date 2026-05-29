@@ -50,7 +50,7 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ marginBottom: 16, display: "flex", gap: 6, flexWrap: "wrap", padding: 4, background: "var(--fondo)", borderRadius: 10 }}>
         {[
           { key: "pending", label: "⏳ Pendientes" },
           { key: "verified", label: "✅ Verificados" },
@@ -60,12 +60,13 @@ export default function AdminPanel() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className="pw-btn-secondary"
             style={{
-              flex: 1, minWidth: 100, padding: "8px 12px", fontSize: 12, fontWeight: 600,
-              background: filter === f.key ? "var(--bordo)" : "var(--fondo)",
-              color: filter === f.key ? "#fff" : "var(--texto-secundario)",
-              border: "1px solid var(--borde)", borderRadius: 8, cursor: "pointer",
+              flex: 1, minWidth: 80, padding: "8px 12px", fontSize: 12, fontWeight: 600,
+              background: filter === f.key ? "var(--blanco)" : "transparent",
+              color: filter === f.key ? "var(--bordo)" : "var(--texto-secundario)",
+              border: "none", borderRadius: 8, cursor: "pointer",
+              boxShadow: filter === f.key ? "var(--sombra)" : "none",
+              transition: "all 0.2s ease",
             }}
           >
             {f.label}
@@ -74,11 +75,8 @@ export default function AdminPanel() {
       </div>
 
       {actionMsg && (
-        <div style={{
-          padding: "8px 12px", borderRadius: 8, marginBottom: 12, fontSize: 13,
-          background: actionMsg.startsWith("Error") ? "var(--critica)" : "var(--aprobado)",
-          color: "#fff",
-        }}>
+        <div className={`pw-toast ${actionMsg.startsWith("Error") ? "pw-toast-error" : "pw-toast-success"}`}
+          style={{ position: "static", transform: "none", marginBottom: 12 }}>
           {actionMsg}
         </div>
       )}
