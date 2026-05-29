@@ -49,6 +49,8 @@ def _build_payload(report, audit):
             "resumen_tecnico_ia": audit.get("resumen_tecnico_ia", ""),
             "clasificacion_urgencia_ia": audit.get("clasificacion_urgencia_ia", ""),
             "analisis_coherencia": audit.get("analisis_coherencia", ""),
+            "distancia_ruta_km": audit.get("distancia_ruta_km"),
+            "direccion": audit.get("direccion"),
         },
     }, ensure_ascii=False)
 

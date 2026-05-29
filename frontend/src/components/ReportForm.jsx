@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import AutocompleteInput from "./AutocompleteInput";
+import LocationPicker from "./LocationPicker";
+import "leaflet/dist/leaflet.css";
 
 const IncidentTypes = [
   "Derrumbe", "Bache", "Neblina", "Lluvia", "Animal suelto",
@@ -25,10 +27,10 @@ function saveHistory(key, value) {
   } catch {}
 }
 
-export default function ReportForm({ onSave }) {
+export default function ReportForm({ onSave, user }) {
   const [form, setForm] = useState({
-    chofer_id: "",
-    empresa_minera: "",
+    chofer_id: user?.chofer_id || "",
+    empresa_minera: user?.empresa || "",
     patente_camion: "",
     latitud: "",
     longitud: "",
@@ -184,14 +186,20 @@ export default function ReportForm({ onSave }) {
 
         <div className="pw-block">
           <h3 className="pw-block-title">Ubicación</h3>
-          <div className="pw-row" style={{ flexWrap: "wrap" }}>
-            <input className="pw-input" placeholder="Latitud" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
-            <input className="pw-input" placeholder="Longitud" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
-          </div>
-          <div className="pw-row" style={{ flexWrap: "wrap" }}>
-            <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "1 1 160px" }}>
-              {geoStatus || "Obtener GPS"}
+          <div className="pw-row" style={{ flexWrap: "wrap", gap: 8 }}>
+            <input className="pw-input" placeholder="Latitud *" value={form.latitud} onChange={set("latitud")} style={{ flex: "1 1 140px" }} />
+            <input className="pw-input" placeholder="Longitud *" value={form.longitud} onChange={set("longitud")} style={{ flex: "1 1 140px" }} />
+            <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ flex: "0 1 auto", whiteSpace: "nowrap" }}>
+              {geoStatus || "📍 GPS"}
             </button>
+          </div>
+          <LocationPicker
+            lat={form.latitud ? parseFloat(form.latitud) : null}
+            lng={form.longitud ? parseFloat(form.longitud) : null}
+            onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))}
+            height={260}
+          />
+          <div className="pw-row" style={{ flexWrap: "wrap", marginTop: 8 }}>
             <AutocompleteInput
               placeholder="Km"
               value={form.kilometro}

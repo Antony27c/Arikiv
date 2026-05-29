@@ -1,10 +1,17 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useOfflineSync } from "./hooks/useOfflineSync";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import NewsFeed from "./pages/NewsFeed";
 import ReportPage from "./pages/ReportPage";
 
+
 function AppContent() {
-  const { pending, synced, online, syncing, enqueue, sync } = useOfflineSync();
+  const { user, logout } = useAuth();
+  const { pending, synced, online, syncing, enqueue, sync, clearSynced } = useOfflineSync();
+
+  if (!user) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="pw-wrapper">
@@ -21,6 +28,15 @@ function AppContent() {
           </span>
         </div>
         <p className="subtitle">Auditoría Vial Inmutable — RN 51</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, fontSize: 13, color: "var(--texto-secundario)", marginBottom: 4 }}>
+          <span>{user.nombre} ({user.chofer_id})</span>
+          <button onClick={logout} style={{
+            background: "none", border: "none", cursor: "pointer", fontSize: 12,
+            color: "var(--bordo)", fontWeight: 600, padding: 0, textDecoration: "underline",
+          }}>
+            Salir
+          </button>
+        </div>
         <div className="pw-stats">
           <span>&#128337; {pending.length} pendientes</span>
           <span>&#9989; {synced.length} sincronizados</span>
@@ -28,6 +44,11 @@ function AppContent() {
         {pending.length > 0 && online && (
           <button onClick={sync} disabled={syncing} className="pw-sync-btn">
             {syncing ? "Sincronizando..." : `Sincronizar ${pending.length} reportes`}
+          </button>
+        )}
+        {synced.length > 0 && (
+          <button onClick={clearSynced} className="pw-sync-btn" style={{ background: "var(--rechazado)" }}>
+            Limpiar {synced.length} reportes fallidos
           </button>
         )}
       </header>
@@ -83,7 +104,9 @@ const navLinkStyle = {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

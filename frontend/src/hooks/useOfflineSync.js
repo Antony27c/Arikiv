@@ -47,6 +47,7 @@ export function useOfflineSync() {
     setSyncing(true);
     const queue = [...pending];
     const done = [];
+    const failed = [];
 
     for (const item of queue) {
       try {
@@ -58,11 +59,11 @@ export function useOfflineSync() {
         const result = await submitReport(payload);
         done.push({ ...item, _result: result, _error: false });
       } catch {
-        done.push({ ...item, _error: true });
+        failed.push(item);
       }
     }
 
-    setPending([]);
+    setPending(failed);
     setSynced((prev) => [...prev, ...done]);
     setSyncing(false);
   }, [pending, online]);
@@ -73,5 +74,21 @@ export function useOfflineSync() {
     }
   }, [online, pending.length, sync]);
 
-  return { pending, synced, online, syncing, enqueue, sync };
+  const clearSynced = useCallback(() => {
+    setSynced([]);
+  }, []);
+
+  const clearPending = useCallback(() => {
+    setPending([]);
+  }, []);
+
+  const removeFromSynced = useCallback((id) => {
+    setSynced((prev) => prev.filter((s) => s._id !== id));
+  }, []);
+
+  const removeFromPending = useCallback((id) => {
+    setPending((prev) => prev.filter((s) => s._id !== id));
+  }, []);
+
+  return { pending, synced, online, syncing, enqueue, sync, clearSynced, clearPending, removeFromSynced, removeFromPending };
 }

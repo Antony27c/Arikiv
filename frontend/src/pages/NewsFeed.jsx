@@ -1,6 +1,24 @@
 import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { getReports } from "../services/api";
 import sampleNews from "../data/sampleNews";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+function MapResize() {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => { map.invalidateSize(); }, 100);
+  }, [map]);
+  return null;
+}
 
 const urgencyColors = {
   CRÍTICA: "var(--critica)",
@@ -35,6 +53,15 @@ function parseArkivReport(entry) {
 
 export default function NewsFeed({ synced, pending }) {
   const [arkivReports, setArkivReports] = useState([]);
+  const [openMaps, setOpenMaps] = useState(new Set());
+
+  function toggleMap(id) {
+    setOpenMaps(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     getReports().then((res) => {
@@ -72,6 +99,10 @@ export default function NewsFeed({ synced, pending }) {
     const geo = s.geolocalizacion_reportada || {};
     const evento = s.datos_evento || {};
     const statusKey = s._result?.status || "aprobado";
+    const coords = geo.coordenadas;
+    const hasCoords = coords?.latitud && coords?.longitud;
+    const mapOpen = openMaps.has(s._id);
+    const tileUrl = import.meta.env.VITE_MAP_TILE_URL || "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 
     return (
       <div key={s._id} className="pw-card" style={{
@@ -110,18 +141,64 @@ export default function NewsFeed({ synced, pending }) {
           <span>Km {geo.kilometro || "?"} · RN 51</span>
         </div>
 
+        {v?.direccion && (
+          <div style={{ fontSize: 11, color: "var(--texto-secundario)", marginBottom: 4, lineHeight: 1.4, padding: "4px 0", borderTop: "1px solid var(--borde)", marginTop: 4 }}>
+            📍 {v.direccion}
+          </div>
+        )}
+
         {v?.analisis_coherencia && (
           <div className="pw-card-footer" style={{
             color: statusKey === "aprobado" ? "var(--aprobado)" : "var(--rechazado)",
+            fontWeight: 500,
           }}>
             {v.analisis_coherencia}
           </div>
         )}
 
-        <div className="pw-card-body" style={{ marginTop: 6, fontSize: 11, color: "var(--texto-secundario)" }}>
-          <span>Score: {Math.round((v?.score_confianza_geografica || 0) * 100)}%</span>
-          <span>{a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}</span>
+        <div className="pw-card-body" style={{ marginTop: 6, fontSize: 11, color: "var(--texto-secundario)", alignItems: "center" }}>
+          <span>
+            Score: {Math.round((v?.score_confianza_geografica || 0) * 100)}%
+            {v?.distancia_ruta_km !== undefined && v?.distancia_ruta_km !== null && (
+              <span style={{ marginLeft: 8, opacity: 0.7 }}>
+                · {v.distancia_ruta_km} km de RN 51
+              </span>
+            )}
+          </span>
+          <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {a?.simulated ? "🔬 Simulado" : "🔗 ARKIV"}
+            {hasCoords && (
+              <button onClick={() => toggleMap(s._id)} style={{
+                background: "none", border: "1px solid var(--borde)", borderRadius: 6,
+                padding: "4px 8px", fontSize: 11, cursor: "pointer", fontWeight: 500,
+                color: mapOpen ? "var(--bordo)" : "var(--texto-secundario)",
+              }}>
+                {mapOpen ? "✕ Cerrar mapa" : "📍 Mapa"}
+              </button>
+            )}
+          </span>
         </div>
+
+        {mapOpen && hasCoords && (
+          <div style={{ marginTop: 8, borderRadius: 8, overflow: "hidden", height: 220 }}>
+            <MapContainer
+              center={[coords.latitud, coords.longitud]}
+              zoom={14}
+              style={{ width: "100%", height: "100%" }}
+              zoomControl={true}
+              attributionControl={false}
+            >
+              <MapResize />
+              <TileLayer url={tileUrl} />
+              <Marker position={[coords.latitud, coords.longitud]}>
+                <Popup>
+                  Km {geo.kilometro || "?"} · RN 51<br />
+                  {evento.tipo_incidente}
+                </Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        )}
       </div>
     );
   }

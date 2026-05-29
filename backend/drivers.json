@@ -1,0 +1,37 @@
+[
+  {
+    "chofer_id": "CHO-001",
+    "nombre": "Carlos Gómez",
+    "username": "cgomez",
+    "password": "8ba3a9e4461ab381cd093ff0a3596417:f460132a015b0b525eaa901a2a11e14f5dc6483ab1407fe8b1d4d168f1b464f9",
+    "empresa": "Lithium Americas"
+  },
+  {
+    "chofer_id": "CHO-002",
+    "nombre": "María López",
+    "username": "mlopez",
+    "password": "1c858e482ac15d89f8fa89750af30a83:86dc6608ff8a891359a590605d1893bdadd1c85a14f1f507010e8c93dc400839",
+    "empresa": "Sales de Jujuy"
+  },
+  {
+    "chofer_id": "CHO-003",
+    "nombre": "Juan Pérez",
+    "username": "jperez",
+    "password": "c6fb3909bce8b69345750b76b7072b5d:ca73dec42cf4b4da0b9453d2e8b2dc64bee1cf20ed532c99ac136da91b499d41",
+    "empresa": "Eramine"
+  },
+  {
+    "chofer_id": "CHO-004",
+    "nombre": "Ana Torres",
+    "username": "atorres",
+    "password": "25748dfae6f825d97f23b24b65cef686:09def7447c562f63f9837e9d351b0579f028ef599ade3f5b3493621bed604b38",
+    "empresa": "Minera del Altip"
+  },
+  {
+    "chofer_id": "CHO-005",
+    "nombre": "Pedro Sánchez",
+    "username": "psanchez",
+    "password": "19cbec104da7912eeb1ef201309ae546:c67b57a9582474e44e204135d3b9bcdd0cbe19050eee7993222a5011585d104a",
+    "empresa": "Lithium Americas"
+  }
+]
