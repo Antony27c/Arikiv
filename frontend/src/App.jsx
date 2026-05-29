@@ -3,7 +3,7 @@ import { useOfflineSync } from "./hooks/useOfflineSync";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import NewsFeed from "./pages/NewsFeed";
 import ReportPage from "./pages/ReportPage";
-
+import LoginPage from "./pages/LoginPage";
 
 function AppContent() {
   const { user, logout } = useAuth();
@@ -37,16 +37,18 @@ function AppContent() {
             Salir
           </button>
         </div>
-        <div className="pw-stats">
-          <span>&#128337; {pending.length} pendientes</span>
-          <span>&#9989; {synced.length} sincronizados</span>
-        </div>
-        {pending.length > 0 && online && (
+        {user.isAdmin && (
+          <div className="pw-stats">
+            <span>&#128337; {pending.length} pendientes</span>
+            <span>&#9989; {synced.length} sincronizados</span>
+          </div>
+        )}
+        {user.isAdmin && pending.length > 0 && online && (
           <button onClick={sync} disabled={syncing} className="pw-sync-btn">
             {syncing ? "Sincronizando..." : `Sincronizar ${pending.length} reportes`}
           </button>
         )}
-        {synced.length > 0 && (
+        {user.isAdmin && synced.length > 0 && (
           <button onClick={clearSynced} className="pw-sync-btn" style={{ background: "var(--rechazado)" }}>
             Limpiar {synced.length} reportes fallidos
           </button>
@@ -58,15 +60,17 @@ function AppContent() {
         <NavLink to="/" end className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
           <span className="pw-nav-label">📰 Noticias</span>
         </NavLink>
-        <NavLink to="/reportar" className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
-          <span className="pw-nav-label">🚨 Reportar</span>
-        </NavLink>
+        {user.isAdmin && (
+          <NavLink to="/reportar" className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
+            <span className="pw-nav-label">🚨 Reportar</span>
+          </NavLink>
+        )}
       </nav>
 
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<NewsFeed synced={synced} pending={pending} />} />
-          <Route path="/reportar" element={<ReportPage onSave={enqueue} />} />
+          {user.isAdmin && <Route path="/reportar" element={<ReportPage onSave={enqueue} />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -84,13 +88,15 @@ function AppContent() {
             </span>
           )}
         </NavLink>
-        <NavLink to="/reportar" style={navLinkStyle} className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
-          {({ isActive }) => (
-            <span className="pw-nav-label" style={{ color: isActive ? "var(--bordo)" : "var(--texto-secundario)" }}>
-              🚨 Reportar
-            </span>
-          )}
-        </NavLink>
+        {user.isAdmin && (
+          <NavLink to="/reportar" style={navLinkStyle} className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
+            {({ isActive }) => (
+              <span className="pw-nav-label" style={{ color: isActive ? "var(--bordo)" : "var(--texto-secundario)" }}>
+                🚨 Reportar
+              </span>
+            )}
+          </NavLink>
+        )}
       </nav>
     </div>
   );
