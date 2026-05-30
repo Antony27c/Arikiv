@@ -93,11 +93,12 @@ export default function NewsFeed({ synced, pending }) {
     const coords = geo.coordenadas;
     const hasCoords = coords?.latitud && coords?.longitud;
     const tileUrl = import.meta.env.VITE_MAP_TILE_URL || "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-    const urgency = v?.clasificacion_urgencia_ia?.toLowerCase() || "";
+    const rawUrgency = v?.clasificacion_urgencia_ia || "";
+    const urgency = rawUrgency.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";
     const score = Math.round((v?.score_confianza_geografica || 0) * 100);
     const isOpen = expanded.has(s._id);
 
-    const cardClass = urgency === "crítica" || urgency === "alta" ? "pw-card-critica"
+    const cardClass = urgency === "critica" || urgency === "alta" ? "pw-card-critica"
       : urgency === "moderada" ? "pw-card-moderada"
       : "pw-card-baja";
 
@@ -107,12 +108,12 @@ export default function NewsFeed({ synced, pending }) {
           <div className="pw-card-header">
             <span className="pw-card-title">{evento.tipo_incidente || "Incidente"}</span>
             <span className={`pw-badge pw-badge-${urgency}`}>
-              {v?.clasificacion_urgencia_ia || "BAJA"}
+              {rawUrgency || "BAJA"}
             </span>
           </div>
           <div className="pw-card-meta">
-            <span>{meta.chofer_id || "?"} &middot; {meta.empresa_minera || "Sin empresa"}</span>
-            <span className="pw-card-km">Km {geo.kilometro || "?"} &middot; RN 51</span>
+            <span>{meta.chofer_id || "?"} · {meta.empresa_minera || "Sin empresa"}</span>
+            <span className="pw-card-km">Km {geo.kilometro || "?"} · RN 51</span>
           </div>
           <div className="pw-score">
             <span className="pw-score-num">{score}</span>
@@ -121,7 +122,9 @@ export default function NewsFeed({ synced, pending }) {
               <span className="pw-score-km">{v.distancia_ruta_km} km</span>
             )}
           </div>
-          {s._sample && <span className="pw-badge" style={{ borderColor: "var(--texto-sec)", color: "var(--texto-sec)" }}>Ejemplo</span>}
+          <button className="pw-btn-masinfo" onClick={(e) => { e.stopPropagation(); toggle(s._id); }}>
+            Más Info
+          </button>
           {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
         </div>
 
@@ -164,6 +167,10 @@ export default function NewsFeed({ synced, pending }) {
 
   return (
     <div>
+      <div className="pw-page-header">
+        <p className="pw-page-subtitle">Auditoria Vial Inmutable — RN 51, Salta</p>
+      </div>
+
       {all.length === 0 && pending.length === 0 && (
         <div className="pw-empty">
           <p className="pw-empty-title">Sin reportes</p>
@@ -183,7 +190,7 @@ export default function NewsFeed({ synced, pending }) {
                   <span className="pw-badge pw-badge-pendiente">Offline</span>
                 </div>
                 <div className="pw-card-meta">
-                  <span>{p.metadata_origen?.chofer_id}</span>
+                  <span>{p.metadata_origen?.chofer_id} · {p.metadata_origen?.empresa_minera || ""}</span>
                   <span className="pw-card-km">Km {p.geolocalizacion_reportada?.kilometro || "?"}</span>
                 </div>
               </div>

@@ -79,10 +79,11 @@ export default function AdminPanel() {
         const meta = r.payload?.metadata_origen || {};
         const audit = r.audit || {};
         const vStatus = r.admin_verification;
-        const urgency = audit.clasificacion_urgencia_ia?.toLowerCase() || "";
+        const rawUrgency = audit.clasificacion_urgencia_ia || "";
+        const urgency = rawUrgency.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";
         const score = Math.round((audit.score_confianza_geografica || 0) * 100);
 
-        const cardClass = urgency === "crítica" || urgency === "alta" ? "pw-card-critica"
+        const cardClass = urgency === "critica" || urgency === "alta" ? "pw-card-critica"
           : urgency === "moderada" ? "pw-card-moderada" : "pw-card-baja";
 
         return (
@@ -90,8 +91,8 @@ export default function AdminPanel() {
             <div className="pw-card-header">
               <span className="pw-card-title" style={{ fontSize: 15 }}>{evento.tipo_incidente || "Sin tipo"}</span>
               <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                {audit.clasificacion_urgencia_ia && (
-                  <span className={`pw-badge pw-badge-${urgency}`}>{audit.clasificacion_urgencia_ia}</span>
+                {rawUrgency && (
+                  <span className={`pw-badge pw-badge-${urgency}`}>{rawUrgency}</span>
                 )}
                 {vStatus === "verified" && <span className="pw-badge pw-badge-aprobado">Verificado</span>}
                 {vStatus === "rejected" && <span className="pw-badge pw-badge-rechazado">Rechazado</span>}
@@ -99,8 +100,8 @@ export default function AdminPanel() {
               </div>
             </div>
             <div className="pw-card-meta">
-              <span>{meta.chofer_id || "?"} &middot; {meta.empresa_minera || ""}</span>
-              <span className="pw-card-km">Km {geo.kilometro || "?"} &middot; RN 51</span>
+              <span>{meta.chofer_id || "?"} · {meta.empresa_minera || ""}</span>
+              <span className="pw-card-km">Km {geo.kilometro || "?"} · RN 51</span>
             </div>
 
             <div className="pw-score">
