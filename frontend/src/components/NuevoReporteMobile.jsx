@@ -8,12 +8,6 @@ const IncidentTypes = [
   "Accidente", "Otro",
 ];
 
-const Priorities = [
-  { key: "alta", label: "Alta" },
-  { key: "moderada", label: "Moderada" },
-  { key: "baja", label: "Baja" },
-];
-
 const Empresas = [
   "Lithium Americas", "Sales de Jujuy", "Eramine", "Minera del Altip",
   "Tecpetrol", "Pluspetrol", "YPF Litio",
@@ -44,7 +38,6 @@ export default function NuevoReporteMobile({ onSave, user }) {
     kilometro: "",
     tipo_incidente: "",
     descripcion_chofer: "",
-    prioridad: "moderada",
   });
   const [photo, setPhoto] = useState(null);
   const [geoStatus, setGeoStatus] = useState("");
@@ -126,9 +119,9 @@ export default function NuevoReporteMobile({ onSave, user }) {
     onSave({
       metadata_origen: { chofer_id: form.chofer_id, empresa_minera: form.empresa_minera || null, patente_camion: form.patente_camion || null, timestamp_offline: new Date().toISOString() },
       geolocalizacion_reportada: { ruta: "Ruta Nacional 51", kilometro: form.kilometro ? parseInt(form.kilometro, 10) : null, coordenadas: { latitud: parseFloat(form.latitud), longitud: parseFloat(form.longitud) } },
-      datos_evento: { tipo_incidente: form.tipo_incidente, descripcion_chofer: form.descripcion_chofer, prioridad: form.prioridad, imagen_hash_sha256: imagen_hash || null, fotos: photo ? [{ filename: "capture.jpg", data: photo }] : [] },
+      datos_evento: { tipo_incidente: form.tipo_incidente, descripcion_chofer: form.descripcion_chofer, imagen_hash_sha256: imagen_hash || null, fotos: photo ? [{ filename: "capture.jpg", data: photo }] : [] },
     });
-    setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "", prioridad: "moderada" });
+        setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
     setPhoto(null);
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -198,16 +191,6 @@ export default function NuevoReporteMobile({ onSave, user }) {
           ))}
         </div>
 
-        <div className="pw-mrf-priority">
-          {Priorities.map(p => (
-            <button key={p.key} type="button"
-              className={`pw-mrf-prio ${form.prioridad === p.key ? "pw-mrf-prio-active" : ""}`}
-              onClick={() => setForm(prev => ({ ...prev, prioridad: p.key }))}>
-              {p.label}
-            </button>
-          ))}
-        </div>
-
         <textarea className="pw-input" placeholder="Describi el incidente..."
           value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={4} />
         <input ref={fileRef} type="file" accept="image/*" capture="environment"
@@ -241,10 +224,8 @@ export default function NuevoReporteMobile({ onSave, user }) {
             <span className="pw-mrf-s-value">{form.tipo_incidente || "—"}</span>
           </div>
           <div className="pw-mrf-s-item">
-            <span className="pw-mrf-s-label">Prioridad</span>
-            <span className="pw-mrf-s-value">
-              {form.prioridad ? Priorities.find(p => p.key === form.prioridad)?.label : "—"}
-            </span>
+            <span className="pw-mrf-s-label">Descripcion</span>
+            <span className="pw-mrf-s-value">{form.descripcion_chofer ? "Si" : "—"}</span>
           </div>
         </div>
         {form.descripcion_chofer && (
@@ -257,7 +238,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
 
       {/* Botones */}
       <button type="button" onClick={() => {
-        setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "", prioridad: "moderada" });
+    setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
         setPhoto(null);
       }} className="pw-mrf-cancel">Cancelar</button>
       <button type="submit" className="pw-mrf-submit"

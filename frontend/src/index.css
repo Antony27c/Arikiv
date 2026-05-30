@@ -893,33 +893,6 @@ select.pw-input {
   font-weight: 500;
 }
 
-/* Priority inline */
-.pw-mrf-priority {
-  display: flex;
-  gap: 0;
-  margin-bottom: 16px;
-}
-
-.pw-mrf-prio {
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--texto-sec);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pw-mrf-prio:hover { color: var(--bordo); }
-
-.pw-mrf-prio-active {
-  color: var(--bordo);
-  font-weight: 500;
-  border-bottom-color: var(--dorado);
-}
-
 /* Summary */
 .pw-mrf-summary {
   display: grid;
