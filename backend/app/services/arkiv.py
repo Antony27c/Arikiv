@@ -164,6 +164,7 @@ def store_report(report, audit, reporte_id=None):
             })
 
     audit["arkiv_tx_hash"] = result.get("tx_hash", "")
+    audit["arkiv_entity_key"] = result.get("entity_key", "")
     db_save_report(reporte_id, report, audit)
     result["reporte_id"] = reporte_id
     return result

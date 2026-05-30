@@ -187,9 +187,9 @@ export default function NewsFeed({ synced, pending }) {
         )}
 
         {(() => {
-          const txHash = a?.entity_key || a?.tx_hash || v?.arkiv_tx_hash || "";
-          if (!txHash || txHash === "0xERR") return null;
-          const isSim = txHash === "0xSIM" || txHash.startsWith("0xSIM") || a?.simulated;
+          const entityKey = a?.entity_key || v?.arkiv_entity_key || "";
+          if (!entityKey || entityKey === "0xERR") return null;
+          const isSim = entityKey === "0xSIM" || entityKey.startsWith("0xSIM") || a?.simulated;
           if (isSim) {
             return (
               <div style={{ fontSize: 11, color: "var(--texto-sec)", textAlign: "right", marginTop: 6, fontStyle: "italic" }}>
@@ -199,7 +199,7 @@ export default function NewsFeed({ synced, pending }) {
           }
           return (
             <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
-              <a href={`https://braga.hoodi.arkiv.network/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+              <a href={`https://explorer.braga.hoodi.arkiv.network/entity/${entityKey}`} target="_blank" rel="noopener noreferrer"
                 style={{ color: "var(--bordo)", textDecoration: "none" }}
                 onClick={(e) => e.stopPropagation()}>
                 Ver transacción en Arkiv →
