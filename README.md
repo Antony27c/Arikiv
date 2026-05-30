@@ -228,11 +228,22 @@ const reportes = await client
 
 El feed principal consume la API REST del backend (que lee de SQLite). Adicionalmente, el frontend implementa **queries directas a ARKIV** mediante el SDK de TypeScript a través de un toggle "Ver desde ARKIV" en el feed, que lee entidades directamente de la testnet Braga sin pasar por el backend. Esto permite consultas descentralizadas y sirve como verificación de que los datos almacenados en ARKIV son accesibles desde la capa de aplicación.
 
-### Modo simulación
+### Modo simulación y escritura on-chain
 
-El backend opera siempre en **modo simulación**: genera `entity_key` y `tx_hash` ficticios (`0xSIM_*`) y persiste los datos solo en SQLite. No existe un SDK de Python para ARKIV, por lo que la escritura on-chain real se delega al **frontend TypeScript** usando el SDK oficial `@arkiv-network/sdk` (ver sección de queries directas arriba).
+El backend de Python no tiene SDK oficial para ARKIV, por lo que la escritura on-chain se realiza a través de un **bridge Node.js** (`frontend/arkiv-writer.mjs`) que usa el SDK oficial `@arkiv-network/sdk`.
 
-Esto permite desarrollo y pruebas sin conexión a la testnet ni consumo de tokens del faucet.
+Flujo de escritura:
+1. El backend construye el payload JSON y los atributos tipados
+2. Llama `node arkiv-writer.mjs` como subprocess, pasando la private key, el payload (base64), el `expiresIn` y los atributos
+3. El script usa `walletClient.createEntity()` del SDK para commitear la entidad en la testnet Braga
+4. Si `ARKIV_PRIVATE_KEY` está vacío o falla la escritura, el backend cae a **modo simulación** (`entity_key=0xSIM_...`, `tx_hash=0xSIM`)
+
+Cuando `ARKIV_PRIVATE_KEY` está configurada:
+```bash
+node arkiv-writer.mjs <private_key> <payload_base64> <expires_in> <attributes_base64>
+```
+
+Cuando `ARKIV_PRIVATE_KEY` está vacía, el backend opera en modo simulación sin necesidad de Node.js.
 
 ### Funcionalidades avanzadas
 
