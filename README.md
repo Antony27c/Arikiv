@@ -1,4 +1,4 @@
-# RutaSegura
+# ViArkiv
 
 Auditoría vial inmutable para la Ruta Nacional 51 — Eje del Litio.
 
@@ -15,13 +15,13 @@ Auditoría vial inmutable para la Ruta Nacional 51 — Eje del Litio.
 
 La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal de la industria del litio en la Puna. Es una ruta de montaña, sinuosa, propensa a derrumbes, niebla y accidentes, y **no existe un sistema digital de reporte de incidentes** para los camioneros que la transitan a diario.
 
-**RutaSegura** resuelve esto con una app mobile-first **offline-first** donde los choferes reportan incidentes viales (derrumbes, niebla, baches, accidentes) con coordenadas GPS y foto, incluso sin conexión a internet. Cada reporte es:
+**ViArkiv** resuelve esto con una app mobile-first **offline-first** donde los choferes reportan incidentes viales (derrumbes, niebla, baches, accidentes) con coordenadas GPS y foto, incluso sin conexión a internet. Cada reporte es:
 
 1. **Auditado por IA** — verificación de coherencia geográfica (anti-fraude) y clasificación de urgencia.
 2. **Almacenado de forma inmutable en ARKIV Network** — la capa de disponibilidad de datos descentralizada sobre Ethereum (testnet Braga), garantizando procedencia e integridad.
 3. **Verificado por un administrador** antes del commit on-chain, asegurando un curador humano en el loop.
 
-**Vertical del hackathon:** Procedencia e infraestructura de datos — RutaSegura garantiza la procedencia y la inmutabilidad de la trazabilidad de incidentes en la cadena logística del litio.
+**Vertical del hackathon:** Procedencia e infraestructura de datos — ViArkiv garantiza la procedencia y la inmutabilidad de la trazabilidad de incidentes en la cadena logística del litio.
 
 ---
 
@@ -84,7 +84,7 @@ La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal d
 
 ## Integración con ARKIV
 
-ARKIV no es un añadido decorativo: es la **capa de verdad definitiva** de RutaSegura. SQLite funciona como caché de lectura rápida, pero la prueba de existencia inmutable de cada reporte vive en ARKIV Network (testnet Braga).
+ARKIV no es un añadido decorativo: es la **capa de verdad definitiva** de ViArkiv. SQLite funciona como caché de lectura rápida, pero la prueba de existencia inmutable de cada reporte vive en ARKIV Network (testnet Braga).
 
 ### Configuración de red
 
@@ -262,8 +262,8 @@ No se utiliza `mutateEntities` en la versión actual. El flujo de datos es inmut
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/rutasegura.git
-cd rutasegura
+git clone https://github.com/tu-usuario/viarkiv.git
+cd viarkiv
 ```
 
 ### 2. Backend
@@ -350,8 +350,8 @@ npm run build     # genera frontend/dist/
 O usando el Dockerfile multi-stage en la raíz:
 
 ```bash
-docker build -t rutasegura .
-docker run -p 8000:8000 rutasegura
+docker build -t viarkiv .
+docker run -p 8000:8000 viarkiv
 ```
 
 ---
@@ -382,7 +382,12 @@ La app detecta cambios de conectividad con `navigator.onLine`. Cuando el chofer 
 
 ## Equipo
 
-_Completar durante el hackathon._
+| Nombre | GitHub |
+|--------|--------|
+| Eduardo Batule | @ |
+| Ariel Lamas | @ |
+| Gildo Diaz | @ |
+| Antonio Chocobar | @ |
 
 ---
 
@@ -402,3 +407,9 @@ _Completar durante el hackathon._
 ## Licencia
 
 MIT
+
+---
+
+## Escritura on-chain
+
+La escritura en ARKIV Network se realiza mediante un bridge Node.js (frontend/arkiv-writer.mjs) que el backend Python invoca como subprocess. Esto resuelve la incompatibilidad entre web3.py y el formato GolemBase que requiere ARKIV. El SDK oficial (@arkiv-network/sdk) maneja la construcción y firma de la transacción nativa de ARKIV.
