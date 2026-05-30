@@ -267,6 +267,63 @@ export default function NewsFeed({ synced, pending }) {
         </button>
       </div>
 
+      {all.length === 0 && pending.length === 0 && (
+        <div className="pw-empty">
+          <p className="pw-empty-title">Sin reportes</p>
+          <p className="pw-empty-desc">No hay reportes verificados. Aparecen aqui despues de la moderacion.</p>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="pw-section">
+          <h3 className="pw-section-title">Pendientes de envio</h3>
+          <div className="pw-section-sub">{pending.length} reporte{pending.length !== 1 ? "s" : ""} esperando sincronizacion</div>
+          {pending.map((p) => (
+            <div key={p._id} className="pw-card pw-card-moderada">
+              <div style={{ padding: "4px 0" }}>
+                <div className="pw-card-header">
+                  <span className="pw-card-title" style={{ fontSize: 15 }}>{p.datos_evento?.tipo_incidente || "Reporte"}</span>
+                  <span className="pw-badge pw-badge-pendiente">Offline</span>
+                </div>
+                <div className="pw-card-meta">
+                  <span>{p.metadata_origen?.chofer_id} · {p.metadata_origen?.empresa_minera || ""}</span>
+                  <span className="pw-card-km">Km {p.geolocalizacion_reportada?.kilometro || "?"}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {all.length > 0 && (
+        <>
+          <div className="pw-section">
+            <h3 className="pw-section-title">Alta prioridad</h3>
+            {altaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de alta prioridad.</p>}
+            {altaPrioridad.map(s => renderCard(s))}
+          </div>
+
+          <div className="pw-section">
+            <h3 className="pw-section-title">Prioridad moderada</h3>
+            {prioridadModerada.length === 0 && <p className="pw-section-sub">Sin incidentes de prioridad moderada.</p>}
+            {prioridadModerada.map(s => renderCard(s))}
+          </div>
+
+          <div className="pw-section">
+            <h3 className="pw-section-title">Baja prioridad</h3>
+            {bajaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de baja prioridad.</p>}
+            {bajaPrioridad.map(s => renderCard(s))}
+          </div>
+
+          {rechazados.length > 0 && (
+            <div className="pw-section">
+              <h3 className="pw-section-title">Rechazados</h3>
+              {rechazados.map(s => renderCard(s))}
+            </div>
+          )}
+        </>
+      )}
+
       {showArkivView && (
         <div className="pw-section">
           <h3 className="pw-section-title">Consulta directa desde ARKIV</h3>
@@ -359,63 +416,6 @@ export default function NewsFeed({ synced, pending }) {
             );
           })}
         </div>
-      )}
-
-      {all.length === 0 && pending.length === 0 && (
-        <div className="pw-empty">
-          <p className="pw-empty-title">Sin reportes</p>
-          <p className="pw-empty-desc">No hay reportes verificados. Aparecen aqui despues de la moderacion.</p>
-        </div>
-      )}
-
-      {pending.length > 0 && (
-        <div className="pw-section">
-          <h3 className="pw-section-title">Pendientes de envio</h3>
-          <div className="pw-section-sub">{pending.length} reporte{pending.length !== 1 ? "s" : ""} esperando sincronizacion</div>
-          {pending.map((p) => (
-            <div key={p._id} className="pw-card pw-card-moderada">
-              <div style={{ padding: "4px 0" }}>
-                <div className="pw-card-header">
-                  <span className="pw-card-title" style={{ fontSize: 15 }}>{p.datos_evento?.tipo_incidente || "Reporte"}</span>
-                  <span className="pw-badge pw-badge-pendiente">Offline</span>
-                </div>
-                <div className="pw-card-meta">
-                  <span>{p.metadata_origen?.chofer_id} · {p.metadata_origen?.empresa_minera || ""}</span>
-                  <span className="pw-card-km">Km {p.geolocalizacion_reportada?.kilometro || "?"}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {all.length > 0 && (
-        <>
-          <div className="pw-section">
-            <h3 className="pw-section-title">Alta prioridad</h3>
-            {altaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de alta prioridad.</p>}
-            {altaPrioridad.map(s => renderCard(s))}
-          </div>
-
-          <div className="pw-section">
-            <h3 className="pw-section-title">Prioridad moderada</h3>
-            {prioridadModerada.length === 0 && <p className="pw-section-sub">Sin incidentes de prioridad moderada.</p>}
-            {prioridadModerada.map(s => renderCard(s))}
-          </div>
-
-          <div className="pw-section">
-            <h3 className="pw-section-title">Baja prioridad</h3>
-            {bajaPrioridad.length === 0 && <p className="pw-section-sub">Sin incidentes de baja prioridad.</p>}
-            {bajaPrioridad.map(s => renderCard(s))}
-          </div>
-
-          {rechazados.length > 0 && (
-            <div className="pw-section">
-              <h3 className="pw-section-title">Rechazados</h3>
-              {rechazados.map(s => renderCard(s))}
-            </div>
-          )}
-        </>
       )}
     </div>
   );
