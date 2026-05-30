@@ -2,25 +2,19 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
-from groq import Groq
+import httpx
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
-
-_client = None
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = Groq(api_key=GROQ_API_KEY)
-    return _client
 
 
 def analizar_reporte(descripcion: str, latitud: float, longitud: float) -> dict:
-    if not GROQ_API_KEY:
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("AI_MODEL_API_KEY") or ""
+
+    if not api_key.strip():
         return {
             "tipo": None,
             "es_fraude": None,
@@ -31,46 +25,61 @@ def analizar_reporte(descripcion: str, latitud: float, longitud: float) -> dict:
             "razon_rechazo": "Servicio de IA no disponible",
         }
 
+    headers = {
+        "Authorization": f"Bearer {api_key.strip()}",
+        "Content-Type": "application/json",
+    }
+
     system_prompt = (
-        "Sos un sistema de filtrado de reportes ciudadanos para la Ruta 51 y su zona de influencia. "
-        "Dado un reporte, respondé SOLO en JSON con este formato:\n"
+        "Sos un sistema de filtrado de reportes para la Ruta Nacional 51, Salta, Argentina. "
+        "Respondé SOLO con JSON válido, sin texto adicional, sin markdown:\n"
         "{\n"
-        '  "tipo": "accidente | obra | corte | otro",\n'
-        '  "es_fraude": true | false,\n'
-        '  "en_zona": true | false,\n'
-        '  "confianza": 0.0 a 1.0,\n'
-        '  "resumen": "resumen en una oración",\n'
-        '  "feedback": "2 oraciones máximo: explicá qué está pasando en el reporte y recomendá cómo actuar. Ejemplo: \'Se detectó un derrumbe en km 45 de RN 51 con alta probabilidad de corte total. Se recomienda alertar a vialidad provincial y desviar tránsito por ruta alternativa.\'",\n'
-        '  "razon_rechazo": "motivo si es fraude o fuera de zona, sino null"\n'
-        "}\n\n"
-        "Coordenadas válidas para Ruta 51: latitud entre -24.5 y -23.0, longitud entre -66.5 y -64.5.\n"
-        "Considerá fraude si: descripción vaga, sin detalles reales, repetida, o incoherente."
+        '  "tipo": "accidente | obra | corte | neblina | otro",\n'
+        '  "es_fraude": false,\n'
+        '  "en_zona": true,\n'
+        '  "confianza": 0.90,\n'
+        '  "resumen": "resumen breve",\n'
+        '  "feedback": "Explicá qué está pasando y dá 2 recomendaciones concretas para conductores.",\n'
+        '  "razon_rechazo": null\n'
+        "}"
     )
 
-    user_prompt = (
-        f"Reporte:\n"
-        f"Descripción: {descripcion}\n"
-        f"Latitud: {latitud}\n"
-        f"Longitud: {longitud}"
-    )
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": f"Reporte: {descripcion}. Coordenadas: lat {latitud}, lon {longitud}",
+            },
+        ],
+        "temperature": 0.3,
+        "max_tokens": 500,
+    }
 
     try:
-        client = _get_client()
-        completion = client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.1,
-            response_format={"type": "json_object"},
-        )
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(GROQ_API_URL, headers=headers, json=payload)
 
-        content = completion.choices[0].message.content
-        result = json.loads(content)
+        if response.status_code != 200:
+            logger.error("Groq HTTP %s: %s", response.status_code, response.text)
+            return {
+                "tipo": None,
+                "es_fraude": None,
+                "en_zona": None,
+                "confianza": 0.0,
+                "resumen": f"Error de Groq: {response.status_code}",
+                "feedback": None,
+                "razon_rechazo": f"HTTP {response.status_code}",
+            }
+
+        data = response.json()
+        texto = data["choices"][0]["message"]["content"].strip()
+        texto_limpio = texto.replace("```json", "").replace("```", "").strip()
+        result = json.loads(texto_limpio)
 
         logger.info(
-            "Groq analisis OK — tipo=%s fraude=%s en_zona=%s confianza=%.2f",
+            "Groq OK — tipo=%s fraude=%s en_zona=%s confianza=%.2f",
             result.get("tipo"), result.get("es_fraude"),
             result.get("en_zona"), result.get("confianza", 0),
         )
