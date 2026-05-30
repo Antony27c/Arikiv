@@ -155,7 +155,7 @@ def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
     if req.status not in ("verified", "rejected", "pending"):
         raise HTTPException(status_code=400, detail="Estado inválido. Usar 'verified', 'rejected' o 'pending'")
 
-    reports = db_list_reports(limit=1)
+    reports = db_list_reports(limit=10000)
     existing = next((r for r in reports if r["reporte_id"] == reporte_id), None)
     if not existing:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")

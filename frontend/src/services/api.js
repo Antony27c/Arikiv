@@ -59,8 +59,15 @@ export async function verifyReport(reporteId, status) {
     body: JSON.stringify({ status }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `HTTP ${res.status}`);
+    const text = await res.text();
+    console.log("Verify response raw:", text);
+    try {
+      const err = JSON.parse(text);
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    } catch (e) {
+      if (e.message && !e.message.startsWith("HTTP")) throw e;
+      throw new Error(`HTTP ${res.status} — respuesta no JSON: ${text.slice(0, 100)}`);
+    }
   }
   return res.json();
 }
