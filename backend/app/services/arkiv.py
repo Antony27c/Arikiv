@@ -89,6 +89,7 @@ def _call_arkiv_writer(private_key, payload_str, expires_in, attributes):
     payload_b64 = base64.b64encode(payload_str.encode("utf-8")).decode("ascii")
     attrs_b64 = base64.b64encode(json.dumps(attributes).encode("utf-8")).decode("ascii")
 
+    logger.info("ARKIV: iniciando subprocess — writer=%s cwd=%s", ARKIV_WRITER_PATH, ARKIV_WRITER_CWD)
     result = subprocess.run(
         ["node", ARKIV_WRITER_PATH, private_key, payload_b64, str(expires_in), attrs_b64],
         capture_output=True,
@@ -96,6 +97,7 @@ def _call_arkiv_writer(private_key, payload_str, expires_in, attributes):
         timeout=60,
         cwd=ARKIV_WRITER_CWD,
     )
+    logger.info("ARKIV: subprocess returncode=%s stdout=%s stderr=%s", result.returncode, result.stdout[:200], result.stderr[:200])
 
     if result.returncode != 0:
         logger.error("ARKIV writer stderr: %s", result.stderr.strip())
