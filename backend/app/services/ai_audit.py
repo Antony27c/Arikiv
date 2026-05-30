@@ -44,10 +44,18 @@ FraudLocations = [
 ]
 
 UrgencyKeywords = {
-    "critica": ["derrumbe", "alud", "corte total", "accidente grave", "deslizamiento", "roca", "detenido total"],
-    "alta": ["obstrucción", "parcial", "vehículo averiado", "carril", "desprendimiento", "camión varado"],
-    "moderada": ["neblina", "llovizna", "bache", "lluvia", "niebla", "calzada mojada", "reducción"],
-    "baja": ["banquina", "visibilidad", "menor", "señalización", "cartel", "animal suelto"],
+    "critica": ["derrumbe", "alud", "corte total", "accidente grave", "deslizamiento", "roca", "detenido total", "choque", "choque frontal", "vuelco", "incendio"],
+    "alta": ["obstrucción", "parcial", "vehículo averiado", "carril bloqueado", "desprendimiento", "camión varado", "rocas", "derrumb", "corte parcial"],
+    "moderada": ["neblina", "llovizna", "bache", "lluvia", "niebla", "calzada mojada", "reducción", "provisional", "lento", "precaución"],
+    "baja": ["banquina", "visibilidad", "menor", "señalización", "cartel", "animal suelto", "señal", "dañada"],
+}
+
+TipoUrgencyMap = {
+    "derrumbe": "CRÍTICA", "accidente": "CRÍTICA", "choque": "CRÍTICA",
+    "corte de ruta": "CRÍTICA", "deslizamiento": "CRÍTICA",
+    "vehículo averiado": "ALTA", "obstrucción": "ALTA",
+    "neblina": "MODERADA", "lluvia": "MODERADA", "bache": "MODERADA",
+    "señalización dañada": "BAJA", "animal suelto": "BAJA",
 }
 
 AI_ENDPOINT = os.getenv("AI_MODEL_ENDPOINT", "")
@@ -141,12 +149,22 @@ def _reverse_geocode(lat, lon):
         logger.warning("Reverse geocode error: %s", str(e))
         return None
 
-def _classify_urgency(desc):
+def _classify_urgency(desc, tipo=""):
+    tipo_lower = tipo.lower().strip()
+    if tipo_lower in TipoUrgencyMap:
+        return TipoUrgencyMap[tipo_lower]
+
     desc_lower = desc.lower()
     for nivel, keywords in UrgencyKeywords.items():
         for kw in keywords:
             if kw in desc_lower:
                 return nivel.upper()
+
+    for nivel, keywords in UrgencyKeywords.items():
+        for kw in keywords:
+            if kw in tipo_lower:
+                return nivel.upper()
+
     return "BAJA"
 
 def _geographic_analysis(lat, lon, desc, tipo, kil):
@@ -280,7 +298,7 @@ def audit_report(report):
         score = max(0.0, min(1.0, ai_result.get("score_confianza_geografica", 0.5)))
     else:
         status_verificacion, analisis, dist_route = _geographic_analysis(lat, lon, desc, tipo, kil)
-        clasificacion_urgencia = _classify_urgency(desc)
+        clasificacion_urgencia = _classify_urgency(desc, tipo)
         resumen = _generate_summary(desc, tipo, kil)
 
         base_score = 100
