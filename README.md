@@ -1,189 +1,391 @@
 # RutaSegura
 
-Auditoría vial inmutable para la Ruta Nacional 51 (Salta, Argentina) — Eje del Litio.
+Auditoría vial inmutable para la Ruta Nacional 51 — Eje del Litio.
 
-## Stack
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
+![ARKIV Braga](https://img.shields.io/badge/ARKIV-Braga%20testnet-8B5CF6)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)
+![ARKIV SDK](https://img.shields.io/badge/ARKIV%20SDK-0.6.8-8B5CF6)
+![License MIT](https://img.shields.io/badge/license-MIT-green)
 
-- **Frontend:** React 19 + Vite 8 (offline-first con localStorage), react-router-dom 7
-- **Backend:** Python FastAPI + web3.py + SQLite
-- **IA:** Auditoría geográfica + detección de fraudes (OpenAI-compatible o reglas Python)
-- **Almacenamiento inmutable:** ARKIV Network (Data Availability Layer)
-- **Infraestructura:** Railway (single service, Docker multi-stage)
+---
 
-## Features
+## ¿Qué es?
 
-- Reporte offline-first de incidentes viales con GPS y foto
-- Feed de noticias con incidentes sincronizados + consulta directa a ARKIV
-- Autocompletado con historial local (chofer, empresa, patente, km)
-- Auditoría geográfica anti-fraude (IA vía OpenAI o fallback a reglas Python)
-- Clasificación de urgencia (BAJA / MODERADA / ALTA / CRÍTICA)
-- Almacenamiento descentralizado en ARKIV Network (con modo simulación sin clave)
-- Persistencia en SQLite para visibilidad entre dispositivos
-- Responsive mobile-first (idioma español)
+La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal de la industria del litio en la Puna. Es una ruta de montaña, sinuosa, propensa a derrumbes, niebla y accidentes, y **no existe un sistema digital de reporte de incidentes** para los camioneros que la transitan a diario.
 
-## Requisitos
+**RutaSegura** resuelve esto con una app mobile-first **offline-first** donde los choferes reportan incidentes viales (derrumbes, niebla, baches, accidentes) con coordenadas GPS y foto, incluso sin conexión a internet. Cada reporte es:
 
-- Python 3.12+
-- Node.js 20+
+1. **Auditado por IA** — verificación de coherencia geográfica (anti-fraude) y clasificación de urgencia.
+2. **Almacenado de forma inmutable en ARKIV Network** — la capa de disponibilidad de datos descentralizada sobre Ethereum (testnet Braga), garantizando procedencia e integridad.
+3. **Verificado por un administrador** antes del commit on-chain, asegurando un curador humano en el loop.
 
-## Inicio rápido (desarrollo local)
+**Vertical del hackathon:** Procedencia e infraestructura de datos — RutaSegura garantiza la procedencia y la inmutabilidad de la trazabilidad de incidentes en la cadena logística del litio.
 
-```bash
-# Backend
-cd backend
-python -m venv venv
-venv\Scripts\pip install -r requirements.txt
-venv\Scripts\uvicorn app.main:app --reload
+---
 
-# Frontend
-cd frontend
-npm install
-npm run dev
+## Demo
+
+| Recurso | URL |
+|---------|-----|
+| App en producción | [https://arikiv-production.up.railway.app](https://arikiv-production.up.railway.app) |
+| Video demo | _Pendiente_ |
+
+---
+
+## Arquitectura
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │              CHOFER (mobile)             │
+                    │  • Reporta offline (localStorage queue)  │
+                    │  • GPS + foto + descripción              │
+                    └──────────────┬──────────────────────────┘
+                                   │ POST /api/reports
+                                   ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     BACKEND (FastAPI + Python)                    │
+│                                                                   │
+│  ┌──────────────┐    ┌──────────────────┐    ┌────────────────┐  │
+│  │  AI Audit     │    │  Groq Analysis   │    │  ARKIV Store   │  │
+│  │  (geo-check,  │───▶│  (Llama 3.3,     │    │  (JSON-RPC,    │  │
+│  │   fraude,     │    │   análisis       │    │   eth_sendRaw- │  │
+│  │   urgencia)   │    │   cualitativo)   │    │   Transaction) │  │
+│  └──────────────┘    └──────────────────┘    └───────┬────────┘  │
+│                                                       │           │
+│  ┌────────────────────────────────────────────────────┴────────┐  │
+│  │                    SQLite (caché local)                      │  │
+│  │  reports.db — reportes con audit + estado admin + tx ARKIV  │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+           │                                            │
+           ▼                                            ▼
+┌──────────────────────────┐         ┌──────────────────────────────────┐
+│     FRONTEND (React 19)   │         │       ARKIV NETWORK (Braga)      │
+│  • NewsFeed (consume API) │         │  • Data Availability Layer       │
+│  • Mapa Leaflet (RN 51)   │         │  • Almacenamiento inmutable      │
+│  • Offline sync hook      │         │  • Explorer público              │
+│  • Admin panel            │         └──────────────────────────────────┘
+└──────────────────────────┘
 ```
 
-O con Docker Compose:
+### Flujo de datos
 
-```bash
-docker compose up --build
+1. El **chofer** completa un reporte offline (se encola en `localStorage`).
+2. Al recuperar conexión, el frontend envía el reporte al backend (`POST /api/reports`).
+3. El backend ejecuta la **auditoría de IA** (OpenAI-compatible o reglas Python de fallback) que verifica coherencia geográfica, detecta fraude y clasifica urgencia.
+4. Paralelamente, **Groq (Llama 3.3-70B)** genera un análisis cualitativo del incidente.
+5. El reporte auditado se persiste en **SQLite** y queda en estado `pending` hasta que un **administrador** lo verifica.
+6. Al verificar, el backend firma una transacción con `web3.py` y la envía a **ARKIV Network** mediante JSON-RPC (`eth_sendRawTransaction`). El payload completo del reporte + auditoría se almacena como entidad en la testnet Braga.
+7. El frontend puede leer los reportes desde la API (que consulta SQLite) y —para consultas directas a ARKIV— mediante el patrón `PROJECT_ATTRIBUTE` del SDK de TypeScript.
+
+---
+
+## Integración con ARKIV
+
+ARKIV no es un añadido decorativo: es la **capa de verdad definitiva** de RutaSegura. SQLite funciona como caché de lectura rápida, pero la prueba de existencia inmutable de cada reporte vive en ARKIV Network (testnet Braga).
+
+### Configuración de red
+
+```python
+ARKIV_RPC_URL = "https://braga.hoodi.arkiv.network/rpc"
+ARKIV_ADDRESS = "0x0000000000000000000000000000000061726976"
+CHAIN_ID = 60138453102  # Braga testnet
 ```
 
-## ARKIV Network — Almacenamiento Inmutable
+### PROJECT_ATTRIBUTE
 
-Los reportes se almacenan en **ARKIV Network**, una capa de disponibilidad de datos descentralizada sobre Ethereum.
-
-### Entity example (lo que se guarda en ARKIV)
-
-Cada reporte se almacena como una entidad con payload, atributos y expiración. Este proyecto usa el modo **simulación** por defecto (sin private key), pero en producción se escribe directamente en la blockchain:
+Cada entidad almacenada en ARKIV se identifica con un par clave-valor que funciona como namespace del proyecto. Para consultas vía SDK de TypeScript:
 
 ```typescript
-// Cada reporte almacenado contiene:
-{
-  reporte_id: "RP-1712345601",
-  metadata_origen: {
-    chofer_id: "CHO-001",
-    empresa_minera: "Lithium Americas",
-    patente_camion: "AA123BB",
-    timestamp_offline: "2026-05-27T08:30:00Z",
-  },
-  geolocalizacion_reportada: {
-    ruta: "Ruta Nacional 51",
-    kilometro: 45,
-    coordenadas: { latitud: -24.183, longitud: -66.312 },
-  },
-  datos_evento: {
-    tipo_incidente: "Derrumbe",
-    descripcion_chofer: "...",
-  },
-  validacion_ia: {
-    agente_id: "arkiv-miner-audit-v1",
-    status_verificacion: "APROBADO",
-    score_confianza_geografica: 0.92,
-    clasificacion_urgencia_ia: "CRÍTICA",
-    resumen_tecnico_ia: "...",
-    // ...
-  },
-}
+export const PROJECT_ATTRIBUTE = {
+  key: "_project",
+  value: "rutasegura_rn51",
+};
 ```
 
-### Consulta de reportes
+### Tipo de entidad
+
+Se define un solo tipo de entidad, `ReporteVial`, que representa un incidente reportado por un chofer, auditado por IA, y verificado por un administrador.
+
+### Esquema de atributos (payload)
+
+Cada entidad `ReporteVial` almacena un payload JSON con la siguiente estructura de atributos anidados:
+
+| Campo | Tipo ARKIV | Descripción |
+|-------|-----------|-------------|
+| `reporte_id` | texto | Identificador único del reporte (ej. `RP-1712345601`) |
+| `metadata_origen.chofer_id` | texto | ID del chofer que reporta (ej. `CHO-001`) |
+| `metadata_origen.empresa_minera` | texto | Empresa minera asociada al transporte |
+| `metadata_origen.patente_camion` | texto | Patente del camión |
+| `metadata_origen.timestamp_offline` | texto | Marca de tiempo ISO-8601 capturada offline |
+| `geolocalizacion_reportada.ruta` | texto | `"Ruta Nacional 51"` |
+| `geolocalizacion_reportada.kilometro` | numérico | Kilómetro aproximado sobre RN 51 |
+| `geolocalizacion_reportada.coordenadas.latitud` | numérico | Latitud GPS |
+| `geolocalizacion_reportada.coordenadas.longitud` | numérico | Longitud GPS |
+| `datos_evento.tipo_incidente` | texto | Tipo: `Derrumbe`, `Neblina`, `Lluvia`, `Bache`, `Accidente`, `Señalización`, `Otro` |
+| `datos_evento.descripcion_chofer` | texto | Descripción textual del chofer |
+| `datos_evento.imagen_hash_sha256` | texto | Hash SHA-256 de la foto adjunta (opcional) |
+| `validacion_ia.agente_id` | texto | `"arkiv-miner-audit-v1"` |
+| `validacion_ia.status_verificacion` | texto | `"APROBADO"` / `"RECHAZADO"` |
+| `validacion_ia.score_confianza_geografica` | numérico | 0.0 – 1.0 (umbral de rechazo < 0.4) |
+| `validacion_ia.resumen_tecnico_ia` | texto | Resumen normalizado por IA |
+| `validacion_ia.clasificacion_urgencia_ia` | texto | `CRÍTICA` / `ALTA` / `MODERADA` / `BAJA` |
+| `validacion_ia.analisis_coherencia` | texto | Explicación del análisis geográfico |
+| `validacion_ia.distancia_ruta_km` | numérico | Distancia del punto reportado a la traza de RN 51 |
+| `validacion_ia.direccion` | texto | Dirección reverso-geocodificada |
+
+### Uso de $owner y $creator
+
+- **$creator**: Es la wallet del administrador que firma y envía la transacción a ARKIV. Queda registrada implícitamente como `from` en la transacción.
+- **$owner**: Es la misma wallet del administrador que verificó el reporte (no se utiliza un modelo de transferencia de ownership ya que no aplica al caso de uso — los reportes no se transfieren entre cuentas).
+
+El driver no necesita tener wallet ni pagar gas: la operación on-chain la realiza el backend con una wallet controlada por el operador del sistema.
+
+### Relaciones entre entidades
+
+Actualmente existe un solo tipo de entidad (`ReporteVial`). Las relaciones son implícitas a través del payload:
+
+- **Chofer ↔ Reportes**: Un chofer se identifica por `chofer_id` en `metadata_origen`. La lista de sus reportes se obtiene filtrando por este campo.
+- **Reporte ↔ Auditoría**: Cada reporte contiene su auditoría embebida en `validacion_ia`. No hay una entidad separada de auditoría.
+
+### Lógica de expiración (expiresIn)
+
+El `expiresIn` de cada entidad `ReporteVial` se determina dinámicamente según el `tipo_incidente`, balanceando necesidad de registro histórico vs. relevancia temporal:
+
+| `tipo_incidente` | `expiresIn` | Justificación |
+|---|---|---|
+| `Derrumbe`, `Accidente`, `Señalización`, `Bache` | `31536000` (1 año) | Incidentes con impacto permanente en la infraestructura vial — deben conservarse como registro histórico |
+| `Neblina`, `Lluvia` | `86400` (24 h) | Condiciones climáticas temporales — pierden relevancia después de un día |
+| `Otro` (default) | `604800` (7 días) | Duración conservadora para incidentes no clasificados |
+
+La lógica se implementa en el backend mediante un diccionario de mapeo:
+
+```python
+EXPIRES_IN_MAP = {
+    "Derrumbe": 31536000,
+    "Accidente": 31536000,
+    "Señalización": 31536000,
+    "Bache": 31536000,
+    "Neblina": 86400,
+    "Lluvia": 86400,
+}
+
+def get_expires_in(tipo_incidente: str) -> int:
+    return EXPIRES_IN_MAP.get(tipo_incidente, 604800)  # default: 7 días
+```
+
+El valor se incluye como campo `expiresIn` en el payload JSON que se envía a ARKIV.
+
+### Patrones de query
+
+**Escritura (backend, Python):**
+
+La escritura se realiza mediante JSON-RPC directo a la testnet Braga:
+
+```python
+from eth_account import Account
+import httpx, json
+
+payload = json.dumps({...datos_del_reporte...})
+acct = Account.from_key(ARKIV_PRIVATE_KEY)
+nonce = rpc_call("eth_getTransactionCount", [acct.address, "latest"])
+gas_price = rpc_call("eth_gasPrice", [])
+
+tx = {
+    "to": ARKIV_ADDRESS,
+    "from": acct.address,
+    "value": 0,
+    "data": "0x" + payload.encode().hex(),
+    "chainId": CHAIN_ID,
+    "nonce": nonce,
+    "gasPrice": gas_price,
+    "gas": 2100000,
+}
+
+signed = acct.sign_transaction(tx)
+tx_hash = rpc_call("eth_sendRawTransaction", [signed.raw_transaction.hex()])
+```
+
+**Lectura (frontend, TypeScript — documentado para consultas directas):**
 
 ```typescript
 import { createPublicClient, http } from "@arkiv-network/sdk";
 import { braga } from "@arkiv-network/sdk/chains";
 import { eq } from "@arkiv-network/sdk/query";
-import { PROJECT_ATTRIBUTE } from "@/lib/arkiv";
 
 const client = createPublicClient({ chain: braga, transport: http() });
 
-const result = await client
+const reportes = await client
   .buildQuery()
   .where(eq(PROJECT_ATTRIBUTE.key, PROJECT_ATTRIBUTE.value))
-  .where(eq("tipo_incidente", "Derrumbe"))
+  .where(eq("datos_evento.tipo_incidente", "Derrumbe"))
   .withPayload(true)
   .limit(50)
   .fetch();
 ```
 
-### Testnet ARKIV (Braga)
+El feed principal consume la API REST del backend (que lee de SQLite). Adicionalmente, el frontend implementa **queries directas a ARKIV** mediante el SDK de TypeScript a través de un toggle "Ver desde ARKIV" en el feed, que lee entidades directamente de la testnet Braga sin pasar por el backend. Esto permite consultas descentralizadas y sirve como verificación de que los datos almacenados en ARKIV son accesibles desde la capa de aplicación.
 
-| Recurso     | URL                                                              |
-|-------------|------------------------------------------------------------------|
-| RPC         | `https://braga.hoodi.arkiv.network/rpc`                          |
-| Chain ID    | `60138453102`                                                    |
-| Faucet      | `https://braga.hoodi.arkiv.network/faucet/`                      |
-| Explorer    | `https://explorer.braga.hoodi.arkiv.network/`                    |
+### Modo simulación
 
-> 📖 Más detalles en [`.agents/skills/arkiv-best-practices/`](.agents/skills/arkiv-best-practices/)
+Cuando `ARKIV_PRIVATE_KEY` está vacío, el backend opera en **modo simulación**: genera `entity_key` y `tx_hash` ficticios (`0xSIM_*`) y persiste los datos solo en SQLite. Esto permite desarrollo y pruebas sin conexión a la testnet ni consumo de tokens del faucet.
 
-## Variables de entorno
+### Funcionalidades avanzadas
 
-### Backend (`backend/.env`)
+No se utiliza `mutateEntities` en la versión actual. El flujo de datos es inmutable append-only: una vez almacenado, un reporte no se modifica. Los cambios de estado administrativos (verified/rejected/pending) se gestionan en SQLite, no en ARKIV.
 
-```
-ARKIV_RPC_URL=https://braga.hoodi.arkiv.network/rpc
-ARKIV_PRIVATE_KEY=                # Dejar vacío para modo simulación
-AI_MODEL_ENDPOINT=                # OpenAI-compatible (opcional)
-AI_MODEL_API_KEY=                 # API key (opcional, fallback a reglas)
-APP_ENV=development
-APP_SECRET_KEY=                   # Secreto de aplicación
-```
+---
 
-### Frontend (`frontend/.env`)
+## Setup local
 
-```
-VITE_BACKEND_URL=http://localhost:8000
-VITE_MAP_TILE_URL=                # URL de tiles OpenStreetMap (reservado)
-VITE_ARKIV_GATEWAY_URL=           # ARKIV gateway para lecturas directas (reservado)
-```
+### Requisitos previos
 
-## Deploy en Railway
+- Python 3.12+
+- Node.js 20+
+- Git
+
+### 1. Clonar el repositorio
 
 ```bash
-git push
-# Railway detecta el Dockerfile en raíz y despliega todo en un servicio
+git clone https://github.com/tu-usuario/rutasegura.git
+cd rutasegura
 ```
 
-**App en producción:** [https://arikiv-production.up.railway.app](https://arikiv-production.up.railway.app)
+### 2. Backend
 
-## Estructura del proyecto
+```bash
+cd backend
+python -m venv venv
 
+# Windows
+venv\Scripts\activate
+venv\Scripts\pip install -r requirements.txt
+
+# Linux/macOS
+# source venv/bin/activate
+# pip install -r requirements.txt
 ```
-├── Dockerfile                    # Multi-stage: frontend (Node) + backend (Python)
-├── docker-compose.yml            # Orquestación local (backend + frontend)
-├── backend/
-│   ├── .env.example
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── app/
-│       ├── main.py               # FastAPI routes + modelos Pydantic
-│       └── services/
-│           ├── ai_audit.py       # Motor de auditoría (IA o reglas)
-│           ├── arkiv.py          # Almacenamiento en ARKIV Network
-│           └── db.py             # Persistencia SQLite
-├── frontend/
-│   ├── .env.example
-│   ├── Dockerfile
-│   ├── nginx.conf                # Configuración nginx para producción
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── public/
-│   └── src/
-│       ├── App.jsx               # Router + navegación offline
-│       ├── main.jsx
-│       ├── index.css
-│       ├── pages/
-│       │   ├── NewsFeed.jsx      # Feed de incidentes (ARKIV + locales)
-│       │   └── ReportPage.jsx
-│       ├── components/
-│       │   ├── ReportForm.jsx
-│       │   └── AutocompleteInput.jsx
-│       ├── hooks/
-│       │   └── useOfflineSync.js
-│       ├── services/
-│       │   └── api.js
-│       └── data/
-│           └── sampleNews.js     # Datos demo
-├── AGENT.md                      # Especificación del agente de IA
-└── .agents/
-    └── skills/arkiv-best-practices/
+
+Crear archivo `backend/.env`:
+
+```env
+ARKIV_RPC_URL=https://braga.hoodi.arkiv.network/rpc
+ARKIV_PRIVATE_KEY=               # Dejar vacío para modo simulación
+AI_MODEL_ENDPOINT=https://api.openai.com/v1/chat/completions
+AI_MODEL_API_KEY=                # Opcional — sin esto usa reglas Python
+GROQ_API_KEY=                    # Opcional — análisis Groq
+APP_ENV=development
+APP_SECRET_KEY=un-secreto-local
 ```
+
+Iniciar el servidor:
+
+```bash
+venv\Scripts\uvicorn app.main:app --reload
+```
+
+El backend queda en `http://localhost:8000`.
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+```
+
+Crear archivo `frontend/.env`:
+
+```env
+VITE_BACKEND_URL=http://localhost:8000
+VITE_MAP_TILE_URL=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+VITE_ARKIV_GATEWAY_URL=https://node.arkiv.network/api/v1
+```
+
+Iniciar el dev server:
+
+```bash
+npm run dev
+```
+
+La app queda en `http://localhost:5173`.
+
+### 4. Docker (alternativa)
+
+```bash
+docker compose up --build
+```
+
+Esto levanta backend (`:8000`) y frontend (`:5173`) simultáneamente.
+
+### 5. Conectar a ARKIV (producción)
+
+Para salir del modo simulación y escribir realmente en ARKIV Braga testnet:
+
+1. Obtener tokens del faucet: [https://braga.hoodi.arkiv.network/faucet/](https://braga.hoodi.arkiv.network/faucet/)
+2. Configurar `ARKIV_PRIVATE_KEY` en `backend/.env` con una private key de Ethereum que tenga fondos en Braga.
+3. Verificar transacciones en el explorer: [https://explorer.braga.hoodi.arkiv.network/](https://explorer.braga.hoodi.arkiv.network/)
+
+### Build para producción
+
+```bash
+cd frontend
+npm run build     # genera frontend/dist/
+```
+
+O usando el Dockerfile multi-stage en la raíz:
+
+```bash
+docker build -t rutasegura .
+docker run -p 8000:8000 rutasegura
+```
+
+---
+
+## Flujos principales
+
+### 1. Reportar un incidente (chofer)
+
+El chofer abre la app, completa 4 pasos: identificación (autocompletado con historial local), ubicación (GPS o mapa interactivo con overlay de RN 51), tipo de incidente + descripción + foto, y confirmación. Si no hay conexión, el reporte se encola en `localStorage` y se sincerra automáticamente al recuperar conectividad.
+
+### 2. Auditoría automática con IA
+
+Cada reporte enviado pasa por el motor de auditoría: verificación de coherencia geográfica (bounding box de RN 51 + distancia Haversine), detección de fraudes (coordenadas (0,0), Salta Capital vs. Puna), clasificación de urgencia (CRÍTICA → BAJA), y generación de resumen técnico. Si hay API key configurada, se usa `gpt-4o-mini`; si no, reglas Python de fallback.
+
+### 3. Verificación administrativa
+
+Un administrador accede al panel con pestañas (Pendientes / Verificados / Rechazados / Todos), revisa los detalles del reporte + auditoría + análisis Groq, y decide si verificarlo (dispara el almacenamiento en ARKIV), rechazarlo, o dejarlo pendiente.
+
+### 4. Feed de incidentes (lectura pública)
+
+Cualquier usuario (incluso sin login) puede ver el feed de reportes verificados, agrupados por urgencia, con mapa interactivo, marcador de ubicación, polilínea de RN 51, score de IA, y enlace a la transacción en el explorer de ARKIV.
+
+### 5. Sincronización offline
+
+La app detecta cambios de conectividad con `navigator.onLine`. Cuando el chofer envía un reporte sin conexión, este se almacena en `localStorage` y se reintenta cada 15 segundos (máximo 3 reintentos) hasta que el backend lo recibe.
+
+---
+
+## Equipo
+
+_Completar durante el hackathon._
+
+---
+
+## Recursos de ARKIV
+
+| Recurso | URL |
+|---------|-----|
+| RPC Braga | `https://braga.hoodi.arkiv.network/rpc` |
+| Chain ID | `60138453102` |
+| Faucet | `https://braga.hoodi.arkiv.network/faucet/` |
+| Explorer | `https://explorer.braga.hoodi.arkiv.network/` |
+| SDK (TypeScript) | `@arkiv-network/sdk` |
+| Best practices | [`.agents/skills/arkiv-best-practices/`](.agents/skills/arkiv-best-practices/) |
+
+---
+
+## Licencia
+
+MIT

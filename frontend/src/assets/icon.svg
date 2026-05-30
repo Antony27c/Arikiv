@@ -1,0 +1,7 @@
+<svg width="80" height="80" viewBox="0 0 80 80" role="img">
+  <rect x="4" y="4" width="72" height="72" rx="16" fill="#5C1A1A"/>
+  <polyline points="12,58 28,28 42,44 58,18 66,30" fill="none" stroke="#C9A84C" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="58" cy="18" r="4.5" fill="#C9A84C"/>
+  <line x1="4" y1="64" x2="76" y2="64" stroke="#C9A84C" stroke-width="1.5" opacity="0.25"/>
+  <text x="40" y="76" font-family="system-ui, sans-serif" font-size="9" font-weight="500" fill="#C9A84C" text-anchor="middle" letter-spacing="1">VA</text>
+</svg>

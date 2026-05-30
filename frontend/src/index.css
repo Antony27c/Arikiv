@@ -138,6 +138,30 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   text-transform: uppercase;
 }
 
+.pw-arkiv-toggle {
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--bordo);
+  border: 1.5px solid var(--bordo);
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.pw-arkiv-toggle:hover {
+  background: var(--bordo);
+  color: var(--superficie);
+}
+
+.pw-arkiv-toggle-active {
+  background: var(--bordo);
+  color: var(--superficie);
+}
+
 .pw-clear-btn {
   font-size: 11px;
   font-weight: 400;
@@ -1092,6 +1116,7 @@ select.pw-input {
   .pw-mobile-nav { max-width: 720px; }
   .pw-header { padding: 0 24px; }
   .pw-header .pw-logo { font-size: 20px; }
+  .pw-sidebar-logo-img { max-width: 160px; }
   .pw-card-title { font-size: 20px; }
   .pw-block { padding: 0 24px; }
   .pw-section { padding: 0 24px; }
@@ -1126,19 +1151,11 @@ select.pw-input {
 
   .pw-sidebar-top { margin-bottom: 32px; }
 
-  .pw-sidebar-logo {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--superficie);
-    letter-spacing: -0.3px;
-    margin-bottom: 2px;
-  }
-
-  .pw-sidebar-rn51 {
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--dorado);
-    letter-spacing: 0.3px;
+  .pw-sidebar-logo-img {
+    width: 100%;
+    max-width: 192px;
+    height: auto;
+    display: block;
     margin-bottom: 12px;
   }
 

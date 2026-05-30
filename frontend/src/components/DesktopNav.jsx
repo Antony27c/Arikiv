@@ -1,11 +1,11 @@
 import { NavLink } from "react-router-dom";
+import logoSidebar from "../assets/logo-dark.svg";
 
 export default function DesktopNav({ user, logout, online, pending, synced }) {
   return (
     <aside className="pw-sidebar">
       <div className="pw-sidebar-top">
-        <div className="pw-sidebar-logo">RutaSegura</div>
-        <div className="pw-sidebar-rn51">RN 51</div>
+        <img src={logoSidebar} alt="ViArkiv" className="pw-sidebar-logo-img" />
         <div className="pw-sidebar-status">
           <span className="pw-dot-online" />
           <span className="pw-sidebar-online">{online ? "Online" : "Offline"}</span>

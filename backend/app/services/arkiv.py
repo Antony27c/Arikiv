@@ -17,13 +17,32 @@ ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
 ARKIV_ADDRESS = "0x0000000000000000000000000000000061726976"
 CHAIN_ID = 60138453102
 
+EXPIRES_IN_MAP = {
+    "Derrumbe": 31536000,
+    "Accidente": 31536000,
+    "Señalización": 31536000,
+    "Bache": 31536000,
+    "Neblina": 86400,
+    "Lluvia": 86400,
+}
+
+DEFAULT_EXPIRES_IN = 604800
+
+
+def get_expires_in(tipo_incidente: str) -> int:
+    return EXPIRES_IN_MAP.get(tipo_incidente, DEFAULT_EXPIRES_IN)
+
+
 def _build_payload(report, audit):
     meta = report.get("metadata_origen", {})
     geo = report.get("geolocalizacion_reportada", {})
     evento = report.get("datos_evento", {})
+    tipo = evento.get("tipo_incidente", "Otro")
+    expires_in = get_expires_in(tipo)
 
     return json.dumps({
         "reporte_id": report.get("reporte_id", ""),
+        "expiresIn": expires_in,
         "metadata_origen": {
             "chofer_id": meta.get("chofer_id", ""),
             "empresa_minera": meta.get("empresa_minera", ""),

@@ -25,7 +25,7 @@ function AppContent() {
         <div className="pw-content">
           <header className="pw-header">
             <div className="pw-header-left">
-              <span className="pw-logo">RutaSegura</span>
+              <span className="pw-logo">ViArkiv</span>
               <span className="pw-rn51">RN 51</span>
             </div>
             <div className="pw-header-right">

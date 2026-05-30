@@ -17,8 +17,8 @@ export default function LoginPage() {
 
   return (
     <div className="pw-login-wrap">
-      <h1 className="pw-login-title">RutaSegura</h1>
-      <p className="pw-login-sub">Auditoria vial inmutable &mdash; RN 51</p>
+      <h1 className="pw-login-title">ViArkiv</h1>
+      <p className="pw-login-sub">Auditoría vial inmutable &mdash; RN 51</p>
 
       <div className="pw-tabs" style={{ margin: 0, marginBottom: 24 }}>
         <button type="button" onClick={() => { setTab("user"); setError(""); }}

@@ -4,6 +4,7 @@ import Rn51Route from "../components/Rn51Route";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getReports, analizarReporte } from "../services/api";
+import { useArkivReports } from "../hooks/useArkivReports";
 import sampleNews from "../data/sampleNews";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -58,6 +59,8 @@ export default function NewsFeed({ synced, pending }) {
   const [iaOpen, setIaOpen] = useState(new Set());
   const [groqAnalysis, setGroqAnalysis] = useState({});
   const [groqLoading, setGroqLoading] = useState({});
+  const [showArkivView, setShowArkivView] = useState(false);
+  const arkivDirect = useArkivReports({ limit: 50 });
 
   function toggle(id) {
     setExpanded(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -254,6 +257,109 @@ export default function NewsFeed({ synced, pending }) {
       <div className="pw-page-header">
         <p className="pw-page-subtitle">Auditoria Vial Inmutable — RN 51, Salta</p>
       </div>
+
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <button
+          onClick={() => setShowArkivView((v) => !v)}
+          className={showArkivView ? "pw-arkiv-toggle pw-arkiv-toggle-active" : "pw-arkiv-toggle"}
+        >
+          {showArkivView ? "Ocultar vista ARKIV" : "Ver desde ARKIV"}
+        </button>
+      </div>
+
+      {showArkivView && (
+        <div className="pw-section">
+          <h3 className="pw-section-title">Consulta directa desde ARKIV</h3>
+          <div className="pw-section-sub">
+            Datos leídos directamente de la testnet Braga ({arkivDirect.data.length} reportes)
+          </div>
+
+          {arkivDirect.loading && (
+            <div className="pw-empty">
+              <p className="pw-empty-title">Consultando ARKIV...</p>
+              <p className="pw-empty-desc">Leyendo reportes desde la blockchain.</p>
+            </div>
+          )}
+
+          {arkivDirect.error && (
+            <div className="pw-empty">
+              <p className="pw-empty-title">Error de conexión</p>
+              <p className="pw-empty-desc">{arkivDirect.error}</p>
+              <button onClick={arkivDirect.refetch} className="pw-arkiv-toggle" style={{ marginTop: 8 }}>
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {!arkivDirect.loading && !arkivDirect.error && arkivDirect.data.length === 0 && (
+            <div className="pw-empty">
+              <p className="pw-empty-title">Sin reportes en ARKIV</p>
+              <p className="pw-empty-desc">No se encontraron entidades para este proyecto en la testnet Braga.</p>
+            </div>
+          )}
+
+          {!arkivDirect.loading && arkivDirect.data.map((entry) => {
+            const p = entry.payload || {};
+            const v = p.validacion_ia || {};
+            const meta = p.metadata_origen || {};
+            const geo = p.geolocalizacion_reportada || {};
+            const evento = p.datos_evento || {};
+            const coords = geo.coordenadas || {};
+            const hasCoords = coords.latitud && coords.longitud;
+            const tileUrl = import.meta.env.VITE_MAP_TILE_URL || "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+            const rawUrgency = v.clasificacion_urgencia_ia || "";
+            const urgency = rawUrgency.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";
+            const score = Math.round((v.score_confianza_geografica || 0) * 100);
+            const cardClass = urgency === "critica" || urgency === "alta" ? "pw-card-critica"
+              : urgency === "moderada" ? "pw-card-moderada"
+              : "pw-card-baja";
+
+            return (
+              <div key={entry.key} className={`pw-card ${cardClass}`}>
+                <div className="pw-card-header">
+                  <span className="pw-card-title">{evento.tipo_incidente || "Incidente"}</span>
+                  <span className={`pw-badge pw-badge-${urgency}`}>{rawUrgency || "BAJA"}</span>
+                </div>
+                <div className="pw-card-meta">
+                  <span>{meta.chofer_id || "?"} · {meta.empresa_minera || "Sin empresa"}</span>
+                  <span className="pw-card-km">Km {geo.kilometro || "?"} · RN 51</span>
+                </div>
+                <div className="pw-score">
+                  <span className="pw-score-num">{score}</span>
+                  <span className="pw-score-label">score IA</span>
+                  {v.distancia_ruta_km !== undefined && (
+                    <span className="pw-score-km">{v.distancia_ruta_km} km</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
+                  <a
+                    href={`https://explorer.braga.hoodi.arkiv.network/tx/${entry.key}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ color: "var(--bordo)", textDecoration: "none" }}
+                  >
+                    Ver entidad en Arkiv →
+                  </a>
+                </div>
+                {v.resumen_tecnico_ia && (
+                  <div className="pw-card-desc" style={{ marginTop: 8 }}>{v.resumen_tecnico_ia}</div>
+                )}
+                {hasCoords && (
+                  <div className="pw-map-thumb" style={{ marginTop: 8 }}>
+                    <MapContainer center={[coords.latitud, coords.longitud]} zoom={11}
+                      style={{ width: "100%", height: 140 }} zoomControl={false} attributionControl={false}>
+                      <TileLayer url={tileUrl} />
+                      <Rn51Route />
+                      <Marker position={[coords.latitud, coords.longitud]}>
+                        <Popup>Km {geo.kilometro || "?"} · RN 51</Popup>
+                      </Marker>
+                    </MapContainer>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {all.length === 0 && pending.length === 0 && (
         <div className="pw-empty">
