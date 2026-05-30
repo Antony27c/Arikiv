@@ -55,6 +55,7 @@ function parseArkivReport(entry) {
 export default function NewsFeed({ synced, pending }) {
   const [arkivReports, setArkivReports] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
+  const [iaOpen, setIaOpen] = useState(new Set());
   const [groqAnalysis, setGroqAnalysis] = useState({});
   const [groqLoading, setGroqLoading] = useState({});
 
@@ -62,7 +63,16 @@ export default function NewsFeed({ synced, pending }) {
     setExpanded(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   }
 
+  function toggleIa(id) {
+    setIaOpen(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+
   async function handleGroqAnalysis(id, descripcion, latitud, longitud) {
+    if (groqAnalysis[id]) {
+      toggleIa(id);
+      return;
+    }
+    toggleIa(id);
     setGroqLoading(prev => ({ ...prev, [id]: true }));
     try {
       const result = await analizarReporte(descripcion, latitud, longitud);
@@ -148,25 +158,33 @@ export default function NewsFeed({ synced, pending }) {
               {groqLoading[s._id] ? "Analizando..." : "IA"}
             </button>
           </div>
-          {groqAnalysis[s._id] && groqAnalysis[s._id].tipo && (
-            <div style={{ fontSize: 11, color: "var(--texto-sec)", marginTop: 4, padding: "6px 8px", background: "rgba(201,168,76,0.08)", borderRadius: 2 }}>
-              <strong>Groq:</strong> {groqAnalysis[s._id].tipo} &middot; Confianza: {(groqAnalysis[s._id].confianza * 100).toFixed(0)}%
-              {groqAnalysis[s._id].es_fraude && <span style={{ color: "var(--rojo)", marginLeft: 4 }}>⚠ Fraude</span>}
-              {!groqAnalysis[s._id].en_zona && <span style={{ color: "var(--rojo)", marginLeft: 4 }}>✗ Fuera de zona</span>}
-              <br />
-              {groqAnalysis[s._id].resumen}
-              {groqAnalysis[s._id].feedback && (
-                <div style={{ fontSize: 11, color: "var(--bordo)", marginTop: 2, fontStyle: "italic" }}>
-                  {groqAnalysis[s._id].feedback}
-                </div>
-              )}
-            </div>
-          )}
-          {groqAnalysis[s._id] && groqAnalysis[s._id].error && (
-            <div style={{ fontSize: 11, color: "var(--rojo)", marginTop: 4 }}>Groq: {groqAnalysis[s._id].error}</div>
-          )}
           {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
         </div>
+
+        {iaOpen.has(s._id) && (
+          <div style={{ marginTop: 6, padding: "10px 12px", background: "rgba(255,255,255,0.96)", border: "1px solid var(--dorado-suave)", borderLeft: "3px solid var(--dorado)", borderRadius: 2, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", right: 8, bottom: 4, fontSize: 9, color: "rgba(122,106,110,0.25)", transform: "rotate(-5deg)", pointerEvents: "none", userSelect: "none", whiteSpace: "nowrap" }}>
+              Sugerencia generada por IA · No es oficial
+            </div>
+            <strong style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--texto-sec)" }}>Análisis IA</strong>
+            {groqLoading[s._id] && (
+              <div style={{ fontSize: 12, color: "var(--texto-sec)", padding: "8px 0" }}>Analizando reporte...</div>
+            )}
+            {!groqLoading[s._id] && groqAnalysis[s._id] && groqAnalysis[s._id].error && (
+              <div style={{ fontSize: 12, color: "var(--rojo)", padding: "8px 0" }}>{groqAnalysis[s._id].error}</div>
+            )}
+            {!groqLoading[s._id] && groqAnalysis[s._id] && groqAnalysis[s._id].feedback && (
+              <div style={{ fontSize: 13, color: "var(--texto)", lineHeight: 1.5, marginTop: 4 }}>
+                {groqAnalysis[s._id].feedback}
+              </div>
+            )}
+            {!groqLoading[s._id] && groqAnalysis[s._id] && !groqAnalysis[s._id].feedback && !groqAnalysis[s._id].error && (
+              <div style={{ fontSize: 12, color: "var(--texto-sec)", padding: "8px 0" }}>
+                {groqAnalysis[s._id].resumen || "Sin información adicional"}
+              </div>
+            )}
+          </div>
+        )}
 
         {isOpen && (
           <div style={{ marginTop: 10 }}>
