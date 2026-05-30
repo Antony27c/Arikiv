@@ -11,15 +11,17 @@ Auditoría vial inmutable para la Ruta Nacional 51 — Eje del Litio.
 
 ---
 
+## En una línea
+
+> App mobile-first donde camioneros reportan incidentes en la RN 51 y cada reporte queda almacenado de forma inmutable en ARKIV Network.
+
+---
+
 ## ¿Qué es?
 
-La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal de la industria del litio en la Puna. Es una ruta de montaña, sinuosa, propensa a derrumbes, niebla y accidentes, y **no existe un sistema digital de reporte de incidentes** para los camioneros que la transitan a diario.
+La Ruta Nacional 51 en Salta, Argentina, es el corredor logístico del litio más importante del país — pero no tiene ningún sistema digital para reportar accidentes, derrumbes o niebla. Los camioneros que la transitan cada día no tienen forma de avisar a otros sobre los peligros del camino.
 
-**ViArkiv** resuelve esto con una app mobile-first **offline-first** donde los choferes reportan incidentes viales (derrumbes, niebla, baches, accidentes) con coordenadas GPS y foto, incluso sin conexión a internet. Cada reporte es:
-
-1. **Auditado por IA** — verificación de coherencia geográfica (anti-fraude) y clasificación de urgencia.
-2. **Almacenado de forma inmutable en ARKIV Network** — la capa de disponibilidad de datos descentralizada sobre Ethereum (testnet Braga), garantizando procedencia e integridad.
-3. **Verificado por un administrador** antes del commit on-chain, asegurando un curador humano en el loop.
+**ViArkiv** es una app pensada para esos choferes: permite reportar incidentes desde el celular, incluso sin internet, con la ubicación GPS y una foto. Cada reporte pasa por una auditoría automática con IA que detecta datos falsos y clasifica la urgencia, y después lo verifica un administrador antes de que quede guardado para siempre en la blockchain.
 
 **Vertical del hackathon:** Procedencia e infraestructura de datos — ViArkiv garantiza la procedencia y la inmutabilidad de la trazabilidad de incidentes en la cadena logística del litio.
 
@@ -36,39 +38,7 @@ La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal d
 
 ## Arquitectura
 
-```
-                    ┌─────────────────────────────────────────┐
-                    │              CHOFER (mobile)             │
-                    │  • Reporta offline (localStorage queue)  │
-                    │  • GPS + foto + descripción              │
-                    └──────────────┬──────────────────────────┘
-                                   │ POST /api/reports
-                                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     BACKEND (FastAPI + Python)                    │
-│                                                                   │
-│  ┌──────────────┐    ┌──────────────────┐    ┌────────────────┐  │
-│  │  AI Audit     │    │  Groq Analysis   │    │  ARKIV Store   │  │
-│  │  (geo-check,  │───▶│  (Llama 3.3,     │    │  (JSON-RPC,    │  │
-│  │   fraude,     │    │   análisis       │    │   eth_sendRaw- │  │
-│  │   urgencia)   │    │   cualitativo)   │    │   Transaction) │  │
-│  └──────────────┘    └──────────────────┘    └───────┬────────┘  │
-│                                                       │           │
-│  ┌────────────────────────────────────────────────────┴────────┐  │
-│  │                    SQLite (caché local)                      │  │
-│  │  reports.db — reportes con audit + estado admin + tx ARKIV  │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────┘
-           │                                            │
-           ▼                                            ▼
-┌──────────────────────────┐         ┌──────────────────────────────────┐
-│     FRONTEND (React 19)   │         │       ARKIV NETWORK (Braga)      │
-│  • NewsFeed (consume API) │         │  • Data Availability Layer       │
-│  • Mapa Leaflet (RN 51)   │         │  • Almacenamiento inmutable      │
-│  • Offline sync hook      │         │  • Explorer público              │
-│  • Admin panel            │         └──────────────────────────────────┘
-└──────────────────────────┘
-```
+El chofer reporta desde su celular (funciona offline). El backend recibe el reporte, lo audita con IA y lo analiza con Groq, luego lo guarda en SQLite hasta que un administrador lo verifica. Una vez verificado, se escribe en ARKIV Network como registro inmutable. El frontend muestra el feed de incidentes verificados y un mapa interactivo de la RN 51, con la opción de consultar datos directo desde ARKIV sin pasar por el backend.
 
 ### Flujo de datos
 
@@ -77,14 +47,14 @@ La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal d
 3. El backend ejecuta la **auditoría de IA** (OpenAI-compatible o reglas Python de fallback) que verifica coherencia geográfica, detecta fraude y clasifica urgencia.
 4. Paralelamente, **Groq (Llama 3.3-70B)** genera un análisis cualitativo del incidente.
 5. El reporte auditado se persiste en **SQLite** y queda en estado `pending` hasta que un **administrador** lo verifica.
-6. Al verificar, el backend firma una transacción con `web3.py` y la envía a **ARKIV Network** mediante JSON-RPC (`eth_sendRawTransaction`). El payload completo del reporte + auditoría se almacena como entidad en la testnet Braga.
+6. Al verificar, el backend firma una transacción y la envía a **ARKIV Network**. El payload completo del reporte + auditoría se almacena como entidad en la testnet Braga.
 7. El frontend puede leer los reportes desde la API (que consulta SQLite) y —para consultas directas a ARKIV— mediante el patrón `PROJECT_ATTRIBUTE` del SDK de TypeScript.
 
 ---
 
-## Integración con ARKIV
+## Cómo usamos ARKIV
 
-ARKIV no es un añadido decorativo: es la **capa de verdad definitiva** de ViArkiv. SQLite funciona como caché de lectura rápida, pero la prueba de existencia inmutable de cada reporte vive en ARKIV Network (testnet Braga).
+ARKIV es la **capa de verdad definitiva** de ViArkiv: SQLite es un caché de lectura rápida, pero la prueba inmutable de cada reporte vive en la testnet Braga.
 
 ### Configuración de red
 
@@ -96,7 +66,7 @@ CHAIN_ID = 60138453102  # Braga testnet
 
 ### PROJECT_ATTRIBUTE
 
-Cada entidad almacenada en ARKIV se identifica con un par clave-valor que funciona como namespace del proyecto. Para consultas vía SDK de TypeScript:
+Namespace del proyecto para filtrar entidades en consultas vía SDK:
 
 ```typescript
 export const PROJECT_ATTRIBUTE = {
@@ -107,11 +77,11 @@ export const PROJECT_ATTRIBUTE = {
 
 ### Tipo de entidad
 
-Se define un solo tipo de entidad, `ReporteVial`, que representa un incidente reportado por un chofer, auditado por IA, y verificado por un administrador.
+Un solo tipo: `ReporteVial` — un incidente reportado por un chofer, auditado por IA y verificado por un administrador.
 
 ### Esquema de atributos (payload)
 
-Cada entidad `ReporteVial` almacena un payload JSON con la siguiente estructura de atributos anidados:
+Cada entidad `ReporteVial` almacena un payload JSON con atributos anidados:
 
 | Campo | Tipo ARKIV | Descripción |
 |-------|-----------|-------------|
@@ -138,29 +108,25 @@ Cada entidad `ReporteVial` almacena un payload JSON con la siguiente estructura 
 
 ### Uso de $owner y $creator
 
-- **$creator**: Es la wallet del administrador que firma y envía la transacción a ARKIV. Queda registrada implícitamente como `from` en la transacción.
-- **$owner**: Es la misma wallet del administrador que verificó el reporte (no se utiliza un modelo de transferencia de ownership ya que no aplica al caso de uso — los reportes no se transfieren entre cuentas).
-
-El driver no necesita tener wallet ni pagar gas: la operación on-chain la realiza el backend con una wallet controlada por el operador del sistema.
+- **$creator**: wallet del administrador que firma la transacción (registrada como `from`).
+- **$owner**: misma wallet del administrador. Los reportes no se transfieren entre cuentas.
+- El chofer no necesita wallet ni pagar gas: la operación on-chain la hace el backend.
 
 ### Relaciones entre entidades
 
-Actualmente existe un solo tipo de entidad (`ReporteVial`). Las relaciones son implícitas a través del payload:
-
-- **Chofer ↔ Reportes**: Un chofer se identifica por `chofer_id` en `metadata_origen`. La lista de sus reportes se obtiene filtrando por este campo.
-- **Reporte ↔ Auditoría**: Cada reporte contiene su auditoría embebida en `validacion_ia`. No hay una entidad separada de auditoría.
+Existe un solo tipo (`ReporteVial`). Las relaciones son implícitas en el payload:
+- **Chofer ↔ Reportes**: se filtra por `chofer_id` en `metadata_origen`.
+- **Reporte ↔ Auditoría**: embebida en `validacion_ia`, no hay entidad separada.
 
 ### Lógica de expiración (expiresIn)
 
-El `expiresIn` de cada entidad `ReporteVial` se determina dinámicamente según el `tipo_incidente`, balanceando necesidad de registro histórico vs. relevancia temporal:
+El `expiresIn` varía según el tipo de incidente para balancear registro histórico vs. relevancia temporal:
 
 | `tipo_incidente` | `expiresIn` | Justificación |
 |---|---|---|
-| `Derrumbe`, `Accidente`, `Señalización`, `Bache` | `31536000` (1 año) | Incidentes con impacto permanente en la infraestructura vial — deben conservarse como registro histórico |
-| `Neblina`, `Lluvia` | `86400` (24 h) | Condiciones climáticas temporales — pierden relevancia después de un día |
-| `Otro` (default) | `604800` (7 días) | Duración conservadora para incidentes no clasificados |
-
-La lógica se implementa en el backend mediante un diccionario de mapeo:
+| `Derrumbe`, `Accidente`, `Señalización`, `Bache` | `31536000` (1 año) | Impacto permanente en infraestructura vial |
+| `Neblina`, `Lluvia` | `86400` (24 h) | Condiciones climáticas temporales |
+| `Otro` (default) | `604800` (7 días) | Duración conservadora para no clasificados |
 
 ```python
 EXPIRES_IN_MAP = {
@@ -176,13 +142,9 @@ def get_expires_in(tipo_incidente: str) -> int:
     return EXPIRES_IN_MAP.get(tipo_incidente, 604800)  # default: 7 días
 ```
 
-El valor se incluye como campo `expiresIn` en el payload JSON que se envía a ARKIV.
-
 ### Patrones de query
 
-**Escritura (backend, Python):**
-
-La escritura se realiza mediante JSON-RPC directo a la testnet Braga:
+**Escritura (backend, Python)** — se realiza mediante JSON-RPC directo a la testnet Braga:
 
 ```python
 from eth_account import Account
@@ -208,7 +170,7 @@ signed = acct.sign_transaction(tx)
 tx_hash = rpc_call("eth_sendRawTransaction", [signed.raw_transaction.hex()])
 ```
 
-**Lectura (frontend, TypeScript — documentado para consultas directas):**
+**Lectura (frontend, TypeScript)** — consultas directas a ARKIV mediante el SDK:
 
 ```typescript
 import { createPublicClient, http } from "@arkiv-network/sdk";
@@ -226,28 +188,21 @@ const reportes = await client
   .fetch();
 ```
 
-El feed principal consume la API REST del backend (que lee de SQLite). Adicionalmente, el frontend implementa **queries directas a ARKIV** mediante el SDK de TypeScript a través de un toggle "Ver desde ARKIV" en el feed, que lee entidades directamente de la testnet Braga sin pasar por el backend. Esto permite consultas descentralizadas y sirve como verificación de que los datos almacenados en ARKIV son accesibles desde la capa de aplicación.
+El feed principal consume la API REST del backend (SQLite). Adicionalmente, el frontend implementa **queries directas a ARKIV** mediante un toggle "Ver desde ARKIV" en el feed, que lee entidades directamente de la testnet Braga sin pasar por el backend.
 
-### Modo simulación y escritura on-chain
+### Escritura on-chain
 
-El backend de Python no tiene SDK oficial para ARKIV, por lo que la escritura on-chain se realiza a través de un **bridge Node.js** (`frontend/arkiv-writer.mjs`) que usa el SDK oficial `@arkiv-network/sdk`.
+La escritura en ARKIV Network se realiza mediante un bridge Node.js (`frontend/arkiv-writer.mjs`) que el backend Python invoca como subprocess. Esto resuelve la incompatibilidad entre web3.py y el formato GolemBase que requiere ARKIV. El SDK oficial (`@arkiv-network/sdk`) maneja la construcción y firma de la transacción nativa de ARKIV.
 
-Flujo de escritura:
-1. El backend construye el payload JSON y los atributos tipados
-2. Llama `node arkiv-writer.mjs` como subprocess, pasando la private key, el payload (base64), el `expiresIn` y los atributos
-3. El script usa `walletClient.createEntity()` del SDK para commitear la entidad en la testnet Braga
-4. Si `ARKIV_PRIVATE_KEY` está vacío o falla la escritura, el backend cae a **modo simulación** (`entity_key=0xSIM_...`, `tx_hash=0xSIM`)
+Flujo: el backend construye el payload y atributos → llama `node arkiv-writer.mjs` como subprocess → el script usa `walletClient.createEntity()` del SDK para commitear la entidad en Braga. Si `ARKIV_PRIVATE_KEY` está vacía o falla la escritura, el backend cae a modo simulación (`entity_key=0xSIM_...`, `tx_hash=0xSIM`).
 
-Cuando `ARKIV_PRIVATE_KEY` está configurada:
 ```bash
 node arkiv-writer.mjs <private_key> <payload_base64> <expires_in> <attributes_base64>
 ```
 
-Cuando `ARKIV_PRIVATE_KEY` está vacía, el backend opera en modo simulación sin necesidad de Node.js.
-
 ### Funcionalidades avanzadas
 
-No se utiliza `mutateEntities` en la versión actual. El flujo de datos es inmutable append-only: una vez almacenado, un reporte no se modifica. Los cambios de estado administrativos (verified/rejected/pending) se gestionan en SQLite, no en ARKIV.
+No se utiliza `mutateEntities` en la versión actual. El flujo es inmutable append-only: una vez almacenado, un reporte no se modifica. Los cambios de estado administrativos (verified/rejected/pending) se gestionan en SQLite, no en ARKIV.
 
 ---
 
@@ -430,9 +385,3 @@ La app detecta cambios de conectividad con `navigator.onLine`. Cuando el chofer 
 ## Licencia
 
 MIT
-
----
-
-## Escritura on-chain
-
-La escritura en ARKIV Network se realiza mediante un bridge Node.js (frontend/arkiv-writer.mjs) que el backend Python invoca como subprocess. Esto resuelve la incompatibilidad entre web3.py y el formato GolemBase que requiere ARKIV. El SDK oficial (@arkiv-network/sdk) maneja la construcción y firma de la transacción nativa de ARKIV.
