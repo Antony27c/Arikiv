@@ -13,6 +13,7 @@ from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report, query_reports
 from app.services.auth import authenticate, create_token, verify_token, register_driver, get_driver_by_id
 from app.services.db import verify_report as db_verify_report
+from app.services.ai_service import analizar_reporte
 
 app = FastAPI(title="RutaSegura API", version="0.1.0")
 
@@ -100,6 +101,13 @@ class RegisterRequest(BaseModel):
 class VerifyRequest(BaseModel):
     status: str
 
+class AnalizarRequest(BaseModel):
+    reporte: str
+
+class AnalizarResponse(BaseModel):
+    error: Optional[str] = None
+    analisis: Optional[dict] = None
+
 def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Token requerido")
@@ -154,6 +162,13 @@ def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "rutasegura-api"}
+
+@app.post("/api/analizar-reporte", response_model=AnalizarResponse)
+def analizar_reporte_endpoint(req: AnalizarRequest):
+    if not req.reporte.strip():
+        raise HTTPException(status_code=400, detail="El campo 'reporte' no puede estar vacío")
+    result = analizar_reporte(req.reporte)
+    return AnalizarResponse(**result)
 
 @app.get("/")
 def index():

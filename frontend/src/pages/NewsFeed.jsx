@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import Rn51Route from "../components/Rn51Route";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { getReports } from "../services/api";
+import { getReports, analizarReporte } from "../services/api";
 import sampleNews from "../data/sampleNews";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -55,9 +55,23 @@ function parseArkivReport(entry) {
 export default function NewsFeed({ synced, pending }) {
   const [arkivReports, setArkivReports] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
+  const [groqAnalysis, setGroqAnalysis] = useState({});
+  const [groqLoading, setGroqLoading] = useState({});
 
   function toggle(id) {
     setExpanded(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+
+  async function handleGroqAnalysis(id, reporte) {
+    setGroqLoading(prev => ({ ...prev, [id]: true }));
+    try {
+      const result = await analizarReporte(reporte);
+      setGroqAnalysis(prev => ({ ...prev, [id]: result }));
+    } catch {
+      setGroqAnalysis(prev => ({ ...prev, [id]: { error: "Error al conectar con Groq" } }));
+    } finally {
+      setGroqLoading(prev => ({ ...prev, [id]: false }));
+    }
   }
 
   function fetchVerified() {
@@ -122,9 +136,28 @@ export default function NewsFeed({ synced, pending }) {
               <span className="pw-score-km">{v.distancia_ruta_km} km</span>
             )}
           </div>
-          <button className="pw-btn-masinfo" onClick={(e) => { e.stopPropagation(); toggle(s._id); }}>
-            Más Info
-          </button>
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <button className="pw-btn-masinfo" onClick={(e) => { e.stopPropagation(); toggle(s._id); }}>
+              Más Info
+            </button>
+            <button
+              className="pw-btn-masinfo"
+              onClick={(e) => { e.stopPropagation(); handleGroqAnalysis(s._id, `${evento.tipo_incidente || ""} — ${v?.resumen_tecnico_ia || evento.descripcion_chofer || ""}`); }}
+              disabled={groqLoading[s._id]}
+            >
+              {groqLoading[s._id] ? "Analizando..." : "Groq IA"}
+            </button>
+          </div>
+          {groqAnalysis[s._id] && groqAnalysis[s._id].analisis && (
+            <div style={{ fontSize: 11, color: "var(--texto-sec)", marginTop: 4, padding: "6px 8px", background: "rgba(201,168,76,0.08)", borderRadius: 2 }}>
+              <strong>Groq:</strong> {groqAnalysis[s._id].analisis.clasificacion} &middot; Score: {groqAnalysis[s._id].analisis.score_confianza}
+              <br />
+              {groqAnalysis[s._id].analisis.resumen}
+            </div>
+          )}
+          {groqAnalysis[s._id] && groqAnalysis[s._id].error && (
+            <div style={{ fontSize: 11, color: "var(--rojo)", marginTop: 4 }}>Groq: {groqAnalysis[s._id].error}</div>
+          )}
           {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
         </div>
 
