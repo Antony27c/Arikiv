@@ -151,6 +151,17 @@ export default function AdminPanel() {
               </div>
             )}
 
+            {audit._arkiv_tx_hash && audit._arkiv_tx_hash !== "0xSIM" && audit._arkiv_tx_hash !== "0xERR" && (
+              <div style={{ marginTop: 8 }}>
+                <button
+                  className="pw-btn-masinfo"
+                  onClick={() => window.open("https://braga.hoodi.arkiv.network/tx/" + audit._arkiv_tx_hash, "_blank")}
+                >
+                  ARKIV
+                </button>
+              </div>
+            )}
+
             {(!vStatus || vStatus === "pending") ? (
               <div className="pw-card-actions">
                 <button onClick={() => handleVerify(r.reporte_id, "verified")} className="pw-btn-action pw-btn-verify">
