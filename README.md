@@ -356,6 +356,29 @@ docker run -p 8000:8000 viarkiv
 
 ---
 
+## Usuarios de prueba
+
+Para probar la app sin registrarse, usá estas credenciales:
+
+### Administrador
+
+| Campo | Valor |
+|-------|-------|
+| Usuario | admin |
+| Contraseña | admin123 |
+
+### Choferes de prueba
+
+| Chofer ID | Usuario | Contraseña |
+|-----------|---------|-------------|
+| CHO-001 | cgomez | pass123 |
+| CHO-002 | mlopez | pass123 |
+| CHO-003 | jperez | pass123 |
+| CHO-004 | atorres | pass123 |
+| CHO-005 | psanchez | pass123 |
+
+---
+
 ## Flujos principales
 
 ### 1. Reportar un incidente (chofer)
