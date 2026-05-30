@@ -91,105 +91,28 @@ def _rpc_call(method, params):
         return data["result"]
 
 
-def _sign_and_send_tx(tx_dict):
-    from eth_account import Account
-    acct = Account.from_key(ARKIV_PRIVATE_KEY)
-    signed = acct.sign_transaction(tx_dict)
-    raw_hex = signed.raw_transaction.hex()
-    if not raw_hex.startswith("0x"):
-        raw_hex = "0x" + raw_hex
-    tx_hash = _rpc_call("eth_sendRawTransaction", [raw_hex])
-    return tx_hash
-
-
 def store_report(report, audit, reporte_id=None):
     if not reporte_id:
         reporte_id = report.get("reporte_id") or f"RP-{int(time.time())}"
-    result = {"reporte_id": reporte_id}
 
-    try:
-        payload_str = _build_payload(report, audit)
+    meta = report.get("metadata_origen", {})
+    entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
 
-        if not ARKIV_PRIVATE_KEY:
-            meta = report.get("metadata_origen", {})
-            entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
-            logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
-            result.update({
-                "entity_key": entity_key,
-                "tx_hash": "0xSIM",
-                "stored": False,
-                "simulated": True,
-            })
-        else:
-            from eth_account import Account
+    logger.info("ARKIV: modo simulación — entity_key=%s", entity_key)
 
-            acct = Account.from_key(ARKIV_PRIVATE_KEY)
-            nonce = int(_rpc_call("eth_getTransactionCount", [acct.address, "latest"]), 16)
-            max_priority_fee = int(_rpc_call("eth_maxPriorityFeePerGas", []), 16)
-            base_fee = int(_rpc_call("eth_gasPrice", []), 16)
+    result = {
+        "reporte_id": reporte_id,
+        "entity_key": entity_key,
+        "tx_hash": "0xSIM",
+        "stored": False,
+        "simulated": True,
+    }
 
-            tx = {
-                "to": ARKIV_ADDRESS,
-                "from": acct.address,
-                "value": 0,
-                "data": "0x" + payload_str.encode().hex(),
-                "chainId": CHAIN_ID,
-                "nonce": nonce,
-                "maxPriorityFeePerGas": max_priority_fee,
-                "maxFeePerGas": base_fee + max_priority_fee,
-                "gas": 2100000,
-            }
-
-            tx_hash_raw = _sign_and_send_tx(tx)
-            logger.info("ARKIV: enviado — tx=%s", tx_hash_raw)
-
-            receipt = _rpc_call("eth_getTransactionReceipt", [tx_hash_raw])
-            retries = 0
-            while receipt is None and retries < 10:
-                time.sleep(2)
-                receipt = _rpc_call("eth_getTransactionReceipt", [tx_hash_raw])
-                retries += 1
-
-            tx_hash_hex = tx_hash_raw if tx_hash_raw.startswith("0x") else "0x" + tx_hash_raw
-            entity_key = f"0x{receipt['logs'][0]['data'][2:]}" if receipt and receipt.get("logs") and receipt["logs"][0].get("data") else tx_hash_hex
-
-            logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash_hex)
-
-            result.update({
-                "entity_key": entity_key,
-                "tx_hash": tx_hash_hex,
-                "stored": True,
-                "simulated": False,
-            })
-
-    except Exception as e:
-        logger.error("ARKIV: error al almacenar — %s", str(e))
-        err_msg = str(e)
-        if "non-golembase" in err_msg:
-            logger.info("ARKIV: red requiere GolemBase, usando simulación")
-            meta = report.get("metadata_origen", {})
-            entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
-            result.update({
-                "entity_key": entity_key,
-                "tx_hash": "0xSIM",
-                "stored": False,
-                "simulated": True,
-            })
-        else:
-            result.update({
-                "entity_key": "0xERR",
-                "tx_hash": "0xERR",
-                "stored": False,
-                "simulated": False,
-                "error": str(e),
-            })
-
-    audit["arkiv_tx_hash"] = result.get("tx_hash", "")
-    audit["arkiv_entity_key"] = result.get("entity_key", "")
-    audit["arkiv_stored"] = result.get("stored", False)
-    audit["arkiv_simulated"] = result.get("simulated", False)
+    audit["arkiv_tx_hash"] = result["tx_hash"]
+    audit["arkiv_entity_key"] = result["entity_key"]
+    audit["arkiv_stored"] = result["stored"]
+    audit["arkiv_simulated"] = result["simulated"]
     db_save_report(reporte_id, report, audit)
-    result["reporte_id"] = reporte_id
     return result
 
 

@@ -230,7 +230,9 @@ El feed principal consume la API REST del backend (que lee de SQLite). Adicional
 
 ### Modo simulación
 
-Cuando `ARKIV_PRIVATE_KEY` está vacío, el backend opera en **modo simulación**: genera `entity_key` y `tx_hash` ficticios (`0xSIM_*`) y persiste los datos solo en SQLite. Esto permite desarrollo y pruebas sin conexión a la testnet ni consumo de tokens del faucet.
+El backend opera siempre en **modo simulación**: genera `entity_key` y `tx_hash` ficticios (`0xSIM_*`) y persiste los datos solo en SQLite. No existe un SDK de Python para ARKIV, por lo que la escritura on-chain real se delega al **frontend TypeScript** usando el SDK oficial `@arkiv-network/sdk` (ver sección de queries directas arriba).
+
+Esto permite desarrollo y pruebas sin conexión a la testnet ni consumo de tokens del faucet.
 
 ### Funcionalidades avanzadas
 
