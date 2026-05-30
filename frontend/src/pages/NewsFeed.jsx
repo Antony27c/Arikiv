@@ -187,25 +187,29 @@ export default function NewsFeed({ synced, pending }) {
         )}
 
         {(() => {
-          const entityKey = a?.entity_key || v?.arkiv_entity_key || "";
-          if (!entityKey || entityKey === "0xERR") return null;
-          const isSim = entityKey === "0xSIM" || entityKey.startsWith("0xSIM") || a?.simulated;
-          if (isSim) {
+          const txHash = a?.tx_hash || v?.arkiv_tx_hash || "";
+          const isStored = a?.stored ?? v?.arkiv_stored ?? false;
+          const isSim = a?.simulated ?? v?.arkiv_simulated ?? false;
+          const isValid = isStored && txHash && txHash !== "0xSIM" && txHash !== "0xERR" && txHash.startsWith("0x") && txHash.length > 10;
+          if (isSim || !isStored) {
             return (
               <div style={{ fontSize: 11, color: "var(--texto-sec)", textAlign: "right", marginTop: 6, fontStyle: "italic" }}>
-                Modo simulación — sin registro en blockchain
+                Modo simulación · sin registro blockchain
               </div>
             );
           }
-          return (
-            <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
-              <a href={`https://explorer.braga.hoodi.arkiv.network/entity/${entityKey}`} target="_blank" rel="noopener noreferrer"
-                style={{ color: "var(--bordo)", textDecoration: "none" }}
-                onClick={(e) => e.stopPropagation()}>
-                Ver transacción en Arkiv →
-              </a>
-            </div>
-          );
+          if (isValid) {
+            return (
+              <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
+                <a href={`https://explorer.braga.hoodi.arkiv.network/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                  style={{ color: "var(--bordo)", textDecoration: "none" }}
+                  onClick={(e) => e.stopPropagation()}>
+                  Ver transacción en Arkiv →
+                </a>
+              </div>
+            );
+          }
+          return null;
         })()}
 
         {isOpen && (

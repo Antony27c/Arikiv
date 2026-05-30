@@ -151,11 +151,11 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {audit.arkiv_entity_key && audit.arkiv_entity_key !== "0xERR" && audit.arkiv_entity_key !== "0xSIM" && !audit.arkiv_entity_key.startsWith("0xSIM") && (
+            {audit.arkiv_stored && audit.arkiv_tx_hash && audit.arkiv_tx_hash !== "0xSIM" && audit.arkiv_tx_hash !== "0xERR" && audit.arkiv_tx_hash.startsWith("0x") && audit.arkiv_tx_hash.length > 10 && (
               <div style={{ marginTop: 8 }}>
                 <button
                   className="pw-btn-masinfo"
-                  onClick={() => window.open("https://explorer.braga.hoodi.arkiv.network/entity/" + audit.arkiv_entity_key, "_blank")}
+                  onClick={() => window.open("https://explorer.braga.hoodi.arkiv.network/tx/" + audit.arkiv_tx_hash, "_blank")}
                 >
                   ARKIV
                 </button>
