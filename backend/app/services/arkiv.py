@@ -13,7 +13,10 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
-ARKIV_WRITER_CWD = os.getenv("ARKIV_WRITER_CWD", "/app/frontend")
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+ARKIV_WRITER_PATH = os.path.join(BASE_DIR, "frontend", "arkiv-writer.mjs")
+ARKIV_WRITER_CWD = os.path.join(BASE_DIR, "frontend")
 
 EXPIRES_IN_MAP = {
     "Derrumbe": 31536000,
@@ -87,7 +90,7 @@ def _call_arkiv_writer(private_key, payload_str, expires_in, attributes):
     attrs_b64 = base64.b64encode(json.dumps(attributes).encode("utf-8")).decode("ascii")
 
     result = subprocess.run(
-        ["node", "arkiv-writer.mjs", private_key, payload_b64, str(expires_in), attrs_b64],
+        ["node", ARKIV_WRITER_PATH, private_key, payload_b64, str(expires_in), attrs_b64],
         capture_output=True,
         text=True,
         timeout=60,
