@@ -126,7 +126,7 @@ export default function ReportForm({ onSave, user }) {
         {STEPS.map((label, i) => (
           <span key={label} style={{ display: "flex", alignItems: "center" }}>
             <span className={`pw-step ${i === step ? "pw-step-active" : ""} ${i < step ? "pw-step-done" : ""}`}>
-              <span className="pw-step-num">{i < step ? "\u2713" : i + 1}</span>
+              <span className="pw-step-circle">{i < step ? "\u2713" : i + 1}</span>
               <span className="pw-step-label">{label}</span>
             </span>
             {i < STEPS.length - 1 && <span className={`pw-step-line ${i < step ? "done" : ""}`} />}
@@ -148,7 +148,7 @@ export default function ReportForm({ onSave, user }) {
       {step === 1 && (
         <div className="pw-block">
           <h3 className="pw-block-title">Ubicacion</h3>
-          <button type="button" onClick={getLocation} className="pw-btn-primary" style={{ marginBottom: 12 }}>
+          <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ marginBottom: 12 }}>
             {geoStatus || "Obtener ubicacion GPS"}
           </button>
           <div className="pw-row" style={{ flexWrap: "wrap", gap: 12 }}>

@@ -5,6 +5,7 @@ import NewsFeed from "./pages/NewsFeed";
 import ReportPage from "./pages/ReportPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPanel from "./pages/AdminPanel";
+import Mountains from "./components/Mountains";
 
 function AppContent() {
   const { user, logout } = useAuth();
@@ -16,6 +17,8 @@ function AppContent() {
 
   return (
     <div className="pw-wrapper">
+      <Mountains />
+      <div className="pw-content">
       <header className="pw-header">
         <div className="pw-header-left">
           <span className="pw-logo">RutaSegura</span>
@@ -23,11 +26,10 @@ function AppContent() {
         </div>
         <div className="pw-header-right">
           {user.isAdmin && (
-            <div className="pw-stats">{pending.length} pendientes / {synced.length} sinc</div>
+            <div className="pw-header-stats">{pending.length} pend / {synced.length} sinc</div>
           )}
-          <span className={`pw-online ${online ? "" : "offline"}`}>
-            {online ? "Online" : "Offline"}
-          </span>
+          <span className="pw-dot-online" />
+          <span className="pw-online-label">{online ? "Online" : "Offline"}</span>
           <button className="pw-header-user" onClick={logout}>
             {user.nombre}
           </button>
@@ -57,6 +59,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      </div>
 
       <nav className="pw-mobile-nav">
         <NavLink to="/" end className={({ isActive }) => isActive ? "pw-nav-active" : ""}>
