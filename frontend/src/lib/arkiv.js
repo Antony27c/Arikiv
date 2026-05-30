@@ -29,6 +29,7 @@ export async function queryReports(filters = {}) {
     query = query.where(eq("validacion_ia.clasificacion_urgencia_ia", urgencia));
   }
 
+  console.log("ARKIV query:", JSON.stringify({ projectAttribute: PROJECT_ATTRIBUTE, filters }));
   const result = await query.fetch();
   const entities = result.entities || [];
 

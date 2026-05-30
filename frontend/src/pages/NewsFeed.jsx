@@ -340,8 +340,8 @@ export default function NewsFeed({ synced, pending }) {
 
           {arkivDirect.error && (
             <div className="pw-empty">
-              <p className="pw-empty-title">Error de conexión</p>
-              <p className="pw-empty-desc">{arkivDirect.error}</p>
+              <p className="pw-empty-title">Sin datos en ARKIV todavía</p>
+              <p className="pw-empty-desc">Los reportes aparecerán aquí una vez que sean verificados y commiteados on-chain.</p>
               <button onClick={arkivDirect.refetch} className="pw-arkiv-toggle" style={{ marginTop: 8 }}>
                 Reintentar
               </button>
@@ -350,8 +350,8 @@ export default function NewsFeed({ synced, pending }) {
 
           {!arkivDirect.loading && !arkivDirect.error && arkivDirect.data.length === 0 && (
             <div className="pw-empty">
-              <p className="pw-empty-title">Sin reportes en ARKIV</p>
-              <p className="pw-empty-desc">No se encontraron entidades para este proyecto en la testnet Braga.</p>
+              <p className="pw-empty-title">Sin datos en ARKIV todavía</p>
+              <p className="pw-empty-desc">Los reportes aparecerán aquí una vez que sean verificados y commiteados on-chain.</p>
             </div>
           )}
 
