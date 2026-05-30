@@ -28,7 +28,7 @@ export async function queryReports(filters = {}) {
     query = query.where(eq("validacion_ia.clasificacion_urgencia_ia", urgencia));
   }
 
-  const entities = await query.fetch();
+  const { entities } = await query.fetch();
 
   return entities.map((entity) => {
     const payload = entity.toJson();
