@@ -162,6 +162,42 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   color: var(--superficie);
 }
 
+.pw-arkiv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.pw-arkiv-badge svg {
+  flex-shrink: 0;
+}
+
+.pw-arkiv-badge-sim {
+  background: #e8e4e0;
+  color: #999;
+  border: none;
+}
+
+.pw-arkiv-badge-active {
+  background: #F5F0E8;
+  color: #5C1A1A;
+  border: 0.5px solid #C9A84C;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pw-arkiv-badge-active:hover {
+  background: #C9A84C;
+  color: #3B1010;
+}
+
 .pw-clear-btn {
   font-size: 11px;
   font-weight: 400;

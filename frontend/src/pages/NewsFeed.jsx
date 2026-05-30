@@ -161,7 +161,6 @@ export default function NewsFeed({ synced, pending }) {
               {groqLoading[s._id] ? "Analizando..." : "IA"}
             </button>
           </div>
-          {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
         </div>
 
         {iaOpen.has(s._id) && (
@@ -194,25 +193,30 @@ export default function NewsFeed({ synced, pending }) {
           const isStored = a?.stored ?? v?.arkiv_stored ?? false;
           const isSim = a?.simulated ?? v?.arkiv_simulated ?? false;
           const isValid = isStored && txHash && txHash !== "0xSIM" && txHash !== "0xERR" && txHash.startsWith("0x") && txHash.length > 10;
-          if (isSim || !isStored) {
-            return (
-              <div style={{ fontSize: 11, color: "var(--texto-sec)", textAlign: "right", marginTop: 6, fontStyle: "italic" }}>
-                Modo simulación · sin registro blockchain
-              </div>
-            );
-          }
-          if (isValid) {
-            return (
-              <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
-                <a href={`https://explorer.braga.hoodi.arkiv.network/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
-                  style={{ color: "var(--bordo)", textDecoration: "none" }}
-                  onClick={(e) => e.stopPropagation()}>
-                  Ver transacción en Arkiv →
-                </a>
-              </div>
-            );
-          }
-          return null;
+          const arkivUrl = `https://explorer.braga.hoodi.arkiv.network/tx/${txHash}`;
+
+          return (
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              {isSim ? (
+                <span className="pw-arkiv-badge pw-arkiv-badge-sim" title="Modo simulación · sin registro on-chain">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  Arkiv
+                </span>
+              ) : isValid ? (
+                <span className="pw-arkiv-badge pw-arkiv-badge-active" onClick={(e) => { e.stopPropagation(); window.open(arkivUrl, "_blank"); }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  Ver en ARKIV
+                </span>
+              ) : null}
+              {s._synced && <span className="pw-badge pw-badge-pendiente">Pendiente</span>}
+            </div>
+          );
         })()}
 
         {isOpen && (
@@ -223,10 +227,6 @@ export default function NewsFeed({ synced, pending }) {
             {v?.analisis_coherencia && (
               <div className="pw-ai-text">{v.analisis_coherencia}</div>
             )}
-
-            <div style={{ fontSize: 12, color: "var(--texto-sec)", marginBottom: 8 }}>
-              {a?.simulated ? "Simulado" : "Arkiv"} &middot; {a?.entity_key || ""}
-            </div>
 
             {hasCoords && (
               <div className="pw-map-thumb" onClick={(e) => { e.stopPropagation(); toggle(s._id + "_map"); }}>
