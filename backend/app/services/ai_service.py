@@ -27,6 +27,7 @@ def analizar_reporte(descripcion: str, latitud: float, longitud: float) -> dict:
             "en_zona": None,
             "confianza": 0.0,
             "resumen": "GROQ_API_KEY no configurada",
+            "feedback": None,
             "razon_rechazo": "Servicio de IA no disponible",
         }
 
@@ -39,6 +40,7 @@ def analizar_reporte(descripcion: str, latitud: float, longitud: float) -> dict:
         '  "en_zona": true | false,\n'
         '  "confianza": 0.0 a 1.0,\n'
         '  "resumen": "resumen en una oración",\n'
+        '  "feedback": "2 oraciones máximo: explicá qué está pasando en el reporte y recomendá cómo actuar. Ejemplo: \'Se detectó un derrumbe en km 45 de RN 51 con alta probabilidad de corte total. Se recomienda alertar a vialidad provincial y desviar tránsito por ruta alternativa.\'",\n'
         '  "razon_rechazo": "motivo si es fraude o fuera de zona, sino null"\n'
         "}\n\n"
         "Coordenadas válidas para Ruta 51: latitud entre -24.5 y -23.0, longitud entre -66.5 y -64.5.\n"
@@ -82,5 +84,6 @@ def analizar_reporte(descripcion: str, latitud: float, longitud: float) -> dict:
             "en_zona": None,
             "confianza": 0.0,
             "resumen": f"Error de IA: {str(e)}",
+            "feedback": None,
             "razon_rechazo": "Error al procesar con Groq",
         }

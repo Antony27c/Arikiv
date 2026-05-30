@@ -138,6 +138,11 @@ export default function AdminPanel() {
                     {audit.groq_analisis.resumen}
                   </div>
                 )}
+                {audit.groq_analisis.feedback && (
+                  <div style={{ fontSize: 12, color: "var(--bordo)", marginTop: 4, fontStyle: "italic", borderTop: "1px solid rgba(201,168,76,0.3)", paddingTop: 4 }}>
+                    {audit.groq_analisis.feedback}
+                  </div>
+                )}
                 {audit.groq_analisis.razon_rechazo && (
                   <div style={{ fontSize: 11, color: "var(--rojo)", marginTop: 2 }}>
                     {audit.groq_analisis.razon_rechazo}

@@ -145,7 +145,7 @@ export default function NewsFeed({ synced, pending }) {
               onClick={(e) => { e.stopPropagation(); handleGroqAnalysis(s._id, evento.descripcion_chofer || v?.resumen_tecnico_ia || "", coords?.latitud || 0, coords?.longitud || 0); }}
               disabled={groqLoading[s._id]}
             >
-              {groqLoading[s._id] ? "Analizando..." : "Groq IA"}
+              {groqLoading[s._id] ? "Analizando..." : "IA"}
             </button>
           </div>
           {groqAnalysis[s._id] && groqAnalysis[s._id].tipo && (
@@ -155,6 +155,11 @@ export default function NewsFeed({ synced, pending }) {
               {!groqAnalysis[s._id].en_zona && <span style={{ color: "var(--rojo)", marginLeft: 4 }}>✗ Fuera de zona</span>}
               <br />
               {groqAnalysis[s._id].resumen}
+              {groqAnalysis[s._id].feedback && (
+                <div style={{ fontSize: 11, color: "var(--bordo)", marginTop: 2, fontStyle: "italic" }}>
+                  {groqAnalysis[s._id].feedback}
+                </div>
+              )}
             </div>
           )}
           {groqAnalysis[s._id] && groqAnalysis[s._id].error && (
