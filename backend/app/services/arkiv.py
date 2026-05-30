@@ -125,7 +125,8 @@ def store_report(report, audit, reporte_id=None):
 
             acct = Account.from_key(ARKIV_PRIVATE_KEY)
             nonce = int(_rpc_call("eth_getTransactionCount", [acct.address, "latest"]), 16)
-            gas_price = int(_rpc_call("eth_gasPrice", []), 16)
+            max_priority_fee = int(_rpc_call("eth_maxPriorityFeePerGas", []), 16)
+            base_fee = int(_rpc_call("eth_gasPrice", []), 16)
 
             tx = {
                 "to": ARKIV_ADDRESS,
@@ -134,7 +135,8 @@ def store_report(report, audit, reporte_id=None):
                 "data": "0x" + payload_str.encode().hex(),
                 "chainId": CHAIN_ID,
                 "nonce": nonce,
-                "gasPrice": gas_price,
+                "maxPriorityFeePerGas": max_priority_fee,
+                "maxFeePerGas": base_fee + max_priority_fee,
                 "gas": 2100000,
             }
 
