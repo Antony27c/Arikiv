@@ -1,12 +1,18 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AutocompleteInput from "./AutocompleteInput";
 import LocationPicker from "./LocationPicker";
 import "leaflet/dist/leaflet.css";
 
 const IncidentTypes = [
-  "Derrumbe", "Bache", "Neblina", "Lluvia", "Animal suelto",
-  "Vehículo averiado", "Accidente", "Corte de ruta", "Señalización dañada",
-  "Otro",
+  "Derrumbe", "Neblina", "Lluvia", "Viento",
+  "Accidente", "Bache", "Animal suelto", "Senializacion danada",
+  "Corte de ruta", "Otro",
+];
+
+const Priorities = [
+  { key: "alta", label: "Alta" },
+  { key: "moderada", label: "Moderada" },
+  { key: "baja", label: "Baja" },
 ];
 
 const Empresas = [
@@ -18,6 +24,13 @@ const KmsSugeridos = [
   "22", "32", "45", "53", "65", "78", "92", "106", "115", "128",
 ];
 
+const SECTIONS = [
+  { key: "id", label: "Identificacion" },
+  { key: "ubicacion", label: "Ubicacion" },
+  { key: "incidente", label: "Incidente" },
+  { key: "confirmar", label: "Confirmar" },
+];
+
 function saveHistory(key, value) {
   if (!value) return;
   try {
@@ -27,10 +40,7 @@ function saveHistory(key, value) {
   } catch {}
 }
 
-const STEPS = ["Identificación", "Ubicación", "Incidente", "Confirmar"];
-
 export default function ReportForm({ onSave, user }) {
-  const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     chofer_id: user?.chofer_id || "",
     empresa_minera: user?.empresa || "",
@@ -40,11 +50,32 @@ export default function ReportForm({ onSave, user }) {
     kilometro: "",
     tipo_incidente: "",
     descripcion_chofer: "",
+    prioridad: "moderada",
   });
   const [photo, setPhoto] = useState(null);
   const [geoStatus, setGeoStatus] = useState("");
-  const [searching, setSearching] = useState(false);
+  const [activeSection, setActiveSection] = useState("id");
   const fileRef = useRef();
+  const sectionRefs = {
+    id: useRef(),
+    ubicacion: useRef(),
+    incidente: useRef(),
+    confirmar: useRef(),
+  };
+
+  useEffect(() => {
+    const observers = SECTIONS.map(({ key }) => {
+      const el = sectionRefs[key]?.current;
+      if (!el) return null;
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(key); },
+        { rootMargin: "-40% 0px -50% 0px" }
+      );
+      observer.observe(el);
+      return observer;
+    });
+    return () => observers.forEach(o => o?.disconnect());
+  }, []);
 
   function setF(field) {
     return (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -52,15 +83,13 @@ export default function ReportForm({ onSave, user }) {
 
   function getLocation() {
     if (!navigator.geolocation) { setGeoStatus("GPS no disponible"); return; }
-    setSearching(true);
-    setGeoStatus("Buscando señal GPS...");
+    setGeoStatus("Buscando senial GPS...");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setForm((prev) => ({ ...prev, latitud: pos.coords.latitude.toFixed(6), longitud: pos.coords.longitude.toFixed(6) }));
         setGeoStatus("GPS obtenido");
-        setSearching(false);
       },
-      () => { setGeoStatus("Error al obtener GPS"); setSearching(false); },
+      () => { setGeoStatus("Error al obtener GPS"); },
       { enableHighAccuracy: true, timeout: 15000 }
     );
   }
@@ -68,7 +97,7 @@ export default function ReportForm({ onSave, user }) {
   function handlePhoto(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert("La foto es muy grande (máx 5MB)"); e.target.value = ""; return; }
+    if (file.size > 5 * 1024 * 1024) { alert("La foto es muy grande (max 5MB)"); e.target.value = ""; return; }
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
@@ -87,17 +116,12 @@ export default function ReportForm({ onSave, user }) {
     reader.readAsDataURL(file);
   }
 
-  function canNext() {
-    if (step === 0) return form.chofer_id.trim();
-    if (step === 1) return form.latitud && form.longitud;
-    if (step === 2) return form.tipo_incidente;
-    return true;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
-    if (step < 3) { if (canNext()) setStep(s => s + 1); return; }
-    if (!form.chofer_id || !form.latitud || !form.longitud || !form.tipo_incidente) { alert("Completá todos los campos obligatorios"); return; }
+    if (!form.chofer_id || !form.latitud || !form.longitud || !form.tipo_incidente) {
+      alert("Complete chofer, coordenadas y tipo de incidente");
+      return;
+    }
     saveHistory("chofer", form.chofer_id);
     saveHistory("empresa", form.empresa_minera);
     saveHistory("patente", form.patente_camion);
@@ -113,86 +137,143 @@ export default function ReportForm({ onSave, user }) {
     onSave({
       metadata_origen: { chofer_id: form.chofer_id, empresa_minera: form.empresa_minera || null, patente_camion: form.patente_camion || null, timestamp_offline: new Date().toISOString() },
       geolocalizacion_reportada: { ruta: "Ruta Nacional 51", kilometro: form.kilometro ? parseInt(form.kilometro, 10) : null, coordenadas: { latitud: parseFloat(form.latitud), longitud: parseFloat(form.longitud) } },
-      datos_evento: { tipo_incidente: form.tipo_incidente, descripcion_chofer: form.descripcion_chofer, imagen_hash_sha256: imagen_hash || null, fotos: photo ? [{ filename: "capture.jpg", data: photo }] : [] },
+      datos_evento: { tipo_incidente: form.tipo_incidente, descripcion_chofer: form.descripcion_chofer, prioridad: form.prioridad, imagen_hash_sha256: imagen_hash || null, fotos: photo ? [{ filename: "capture.jpg", data: photo }] : [] },
     });
-    setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
-    setPhoto(null); setStep(0);
+    setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "", prioridad: "moderada" });
+    setPhoto(null);
     if (fileRef.current) fileRef.current.value = "";
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="pw-stepper">
-        {STEPS.map((label, i) => (
-          <span key={label} style={{ display: "flex", alignItems: "center" }}>
-            <span className={`pw-step ${i === step ? "pw-step-active" : ""} ${i < step ? "pw-step-done" : ""}`}>
-              <span className="pw-step-circle">{i < step ? "\u2713" : i + 1}</span>
-              <span className="pw-step-label">{label}</span>
+    <form onSubmit={handleSubmit} className="pw-report-form">
+      {/* Stepper decorativo */}
+      <div className="pw-rf-stepper">
+        {SECTIONS.map((s, i) => (
+          <span key={s.key} style={{ display: "flex", alignItems: "center" }}>
+            <span className={`pw-rf-step ${activeSection === s.key ? "pw-rf-step-active" : ""}`}>
+              <span className="pw-rf-step-dot" />
+              <span className="pw-rf-step-label">{s.label}</span>
             </span>
-            {i < STEPS.length - 1 && <span className={`pw-step-line ${i < step ? "done" : ""}`} />}
+            {i < SECTIONS.length - 1 && <span className="pw-rf-step-line" />}
           </span>
         ))}
       </div>
 
-      {step === 0 && (
-        <div className="pw-block">
-          <h3 className="pw-block-title">Identificacion</h3>
-          <AutocompleteInput placeholder="ID del Chofer *" value={form.chofer_id} onChange={setF("chofer_id")} suggestions={[]} historyKey="chofer" required />
-          <div className="pw-row" style={{ flexWrap: "wrap" }}>
-            <AutocompleteInput placeholder="Empresa minera" value={form.empresa_minera} onChange={setF("empresa_minera")} suggestions={Empresas} historyKey="empresa" style={{ flex: "1 1 140px" }} />
-            <AutocompleteInput placeholder="Patente" value={form.patente_camion} onChange={setF("patente_camion")} suggestions={[]} historyKey="patente" style={{ flex: "1 1 120px" }} />
-          </div>
+      {/* Seccion 1 - Identificacion */}
+      <div ref={sectionRefs.id} className="pw-rf-section">
+        <h3 className="pw-block-title">Identificacion</h3>
+        <AutocompleteInput placeholder="Nombre del chofer *" value={form.chofer_id}
+          onChange={setF("chofer_id")} suggestions={[]} historyKey="chofer" required />
+        <div className="pw-row">
+          <AutocompleteInput placeholder="Empresa minera" value={form.empresa_minera}
+            onChange={setF("empresa_minera")} suggestions={Empresas} historyKey="empresa" style={{ flex: 1 }} />
+          <AutocompleteInput placeholder="Patente" value={form.patente_camion}
+            onChange={setF("patente_camion")} suggestions={[]} historyKey="patente" style={{ flex: 1 }} />
         </div>
-      )}
+        <div className="pw-rf-divider" />
+      </div>
 
-      {step === 1 && (
-        <div className="pw-block">
-          <h3 className="pw-block-title">Ubicacion</h3>
-          <button type="button" onClick={getLocation} className="pw-btn-secondary" style={{ marginBottom: 12 }}>
-            {geoStatus || "Obtener ubicacion GPS"}
+      {/* Seccion 2 - Ubicacion */}
+      <div ref={sectionRefs.ubicacion} className="pw-rf-section">
+        <h3 className="pw-block-title">Ubicacion</h3>
+        <div className="pw-rf-coords-row">
+          <input className="pw-input" placeholder="Latitud *" value={form.latitud}
+            onChange={setF("latitud")} style={{ flex: 3 }} />
+          <input className="pw-input" placeholder="Longitud *" value={form.longitud}
+            onChange={setF("longitud")} style={{ flex: 3 }} />
+          <button type="button" onClick={getLocation} className="pw-rf-gps-btn" style={{ flex: 2 }}>
+            {geoStatus || "GPS"}
           </button>
-          <div className="pw-row" style={{ flexWrap: "wrap", gap: 12 }}>
-            <input className="pw-input" placeholder="Latitud *" value={form.latitud} onChange={setF("latitud")} style={{ flex: "1 1 140px" }} />
-            <input className="pw-input" placeholder="Longitud *" value={form.longitud} onChange={setF("longitud")} style={{ flex: "1 1 140px" }} />
-          </div>
-          <div className="pw-map-wrap" style={{ margin: "12px -20px 0" }}>
-            <LocationPicker lat={form.latitud ? parseFloat(form.latitud) : null} lng={form.longitud ? parseFloat(form.longitud) : null}
-              onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))} height={300} />
-          </div>
-          <AutocompleteInput placeholder="Km aproximado" value={form.kilometro} onChange={setF("kilometro")} suggestions={KmsSugeridos} historyKey="kilometro" type="number" style={{ marginTop: 12, flex: "0 1 120px" }} />
         </div>
-      )}
-
-      {step === 2 && (
-        <div className="pw-block">
-          <h3 className="pw-block-title">Incidente</h3>
-          <select className="pw-input" value={form.tipo_incidente} onChange={setF("tipo_incidente")}>
-            <option value="">Tipo de incidente *</option>
-            {IncidentTypes.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <textarea className="pw-input" placeholder="Descripcion del incidente" value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={3} />
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="pw-input" />
-          {photo && <img src={photo} alt="" className="pw-preview" />}
+        <div className="pw-map-wrap" style={{ margin: "12px 0" }}>
+          <LocationPicker lat={form.latitud ? parseFloat(form.latitud) : null}
+            lng={form.longitud ? parseFloat(form.longitud) : null}
+            onChange={({ latitud, longitud }) => setForm(prev => ({ ...prev, latitud, longitud }))}
+            height={280} />
         </div>
-      )}
+        <AutocompleteInput placeholder="Kilometro" value={form.kilometro}
+          onChange={setF("kilometro")} suggestions={KmsSugeridos} historyKey="kilometro"
+          type="number" style={{ maxWidth: 120 }} />
+        <div className="pw-rf-divider" />
+      </div>
 
-      {step === 3 && (
-        <div className="pw-block">
-          <h3 className="pw-block-title">Confirmar</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: "var(--texto)" }}>
-            <p><strong>Chofer:</strong> {form.chofer_id}{form.empresa_minera ? " / " + form.empresa_minera : ""}</p>
-            <p><strong>Ubicacion:</strong> {form.latitud}, {form.longitud}{form.kilometro ? " / Km " + form.kilometro : ""}</p>
-            <p><strong>Incidente:</strong> {form.tipo_incidente}</p>
-            {form.descripcion_chofer && <p style={{ fontStyle: "italic", color: "var(--texto-sec)" }}>"{form.descripcion_chofer}"</p>}
-            {photo && <img src={photo} alt="" style={{ width: "100%", maxHeight: 160, objectFit: "cover" }} />}
+      {/* Seccion 3 - Incidente */}
+      <div ref={sectionRefs.incidente} className="pw-rf-section">
+        <h3 className="pw-block-title">Incidente</h3>
+        <div className="pw-rf-chips">
+          {IncidentTypes.map(t => (
+            <button key={t} type="button"
+              className={`pw-rf-chip ${form.tipo_incidente === t ? "pw-rf-chip-active" : ""}`}
+              onClick={() => setForm(prev => ({ ...prev, tipo_incidente: t }))}>
+              {t}
+            </button>
+          ))}
+        </div>
+        <textarea className="pw-input" placeholder="Descripcion del incidente"
+          value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={4} />
+        <input ref={fileRef} type="file" accept="image/*" capture="environment"
+          onChange={handlePhoto} className="pw-input" style={{ marginTop: 8 }} />
+        {photo && <img src={photo} alt="" className="pw-preview" />}
+        <div className="pw-rf-priority">
+          <span className="pw-rf-priority-label">Prioridad:</span>
+          {Priorities.map(p => (
+            <button key={p.key} type="button"
+              className={`pw-rf-prio-btn ${form.prioridad === p.key ? "pw-rf-prio-active" : ""}`}
+              onClick={() => setForm(prev => ({ ...prev, prioridad: p.key }))}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="pw-rf-divider" />
+      </div>
+
+      {/* Seccion 4 - Confirmar */}
+      <div ref={sectionRefs.confirmar} className="pw-rf-section">
+        <h3 className="pw-block-title">Confirmar</h3>
+        <div className="pw-rf-summary">
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Chofer</span>
+            <span className="pw-rf-summary-value">{form.chofer_id || "—"}</span>
+          </div>
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Empresa</span>
+            <span className="pw-rf-summary-value">{form.empresa_minera || "—"}</span>
+          </div>
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Patente</span>
+            <span className="pw-rf-summary-value">{form.patente_camion || "—"}</span>
+          </div>
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Kilometro</span>
+            <span className="pw-rf-summary-value">{form.kilometro || "—"}</span>
+          </div>
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Tipo de incidente</span>
+            <span className="pw-rf-summary-value">{form.tipo_incidente || "—"}</span>
+          </div>
+          <div className="pw-rf-summary-item">
+            <span className="pw-rf-summary-label">Prioridad</span>
+            <span className="pw-rf-summary-value">{form.prioridad ? Priorities.find(p => p.key === form.prioridad)?.label : "—"}</span>
           </div>
         </div>
-      )}
+        {form.descripcion_chofer && (
+          <div style={{ marginTop: 12, fontSize: 13, fontStyle: "italic", color: "var(--texto-sec)", lineHeight: 1.5 }}>
+            "{form.descripcion_chofer}"
+          </div>
+        )}
+        {photo && <img src={photo} alt="" style={{ width: "100%", maxHeight: 160, objectFit: "cover", marginTop: 12 }} />}
+        <div className="pw-rf-divider" />
+      </div>
 
-      <div style={{ display: "flex", gap: 12, padding: "0 20px" }}>
-        {step > 0 && <button type="button" onClick={() => setStep(s => s - 1)} className="pw-btn-secondary">Anterior</button>}
-        <button type="submit" className="pw-btn-primary" disabled={!canNext()}>
-          {step < 3 ? "Siguiente" : "Enviar reporte"}
+      {/* Botones de accion */}
+      <div className="pw-rf-actions">
+        <button type="button" onClick={() => {
+          setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "", prioridad: "moderada" });
+          setPhoto(null);
+        }} className="pw-btn-ghost">Cancelar</button>
+        <button type="submit" className="pw-btn-primary" style={{ width: "auto", padding: "12px 32px" }}
+          disabled={!form.chofer_id || !form.latitud || !form.longitud || !form.tipo_incidente}>
+          Enviar reporte
         </button>
       </div>
     </form>
