@@ -209,7 +209,7 @@ def _generate_summary(desc, tipo, kil):
     return summary
 
 def _call_ai(lat, lon, desc, tipo, kil, driver_id):
-    if not AI_ENDPOINT or not AI_API_KEY:
+    if not AI_ENDPOINT:
         logger.info("AI: no configurado, usando reglas")
         return None
 
@@ -224,10 +224,9 @@ def _call_ai(lat, lon, desc, tipo, kil, driver_id):
     )
 
     try:
-        headers = {
-            "Authorization": f"Bearer {AI_API_KEY}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json"}
+        if AI_API_KEY:
+            headers["Authorization"] = f"Bearer {AI_API_KEY}"
         body = {
             "model": "gpt-4o-mini",
             "messages": [
