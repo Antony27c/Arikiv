@@ -3,6 +3,7 @@ import os
 import time
 import logging
 from dotenv import load_dotenv
+import httpx
 
 from app.services.db import save_report as db_save_report, list_reports as db_list_reports
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 ARKIV_RPC = os.getenv("ARKIV_RPC_URL", "https://braga.hoodi.arkiv.network/rpc")
 ARKIV_PRIVATE_KEY = os.getenv("ARKIV_PRIVATE_KEY", "")
 
-ARKIV_ADDRESS = "0x000000000000000000000000000000000061726976"
+ARKIV_ADDRESS = "0x0000000000000000000000000000000061726976"
 CHAIN_ID = 60138453102
 
 def _build_payload(report, audit):
@@ -54,6 +55,34 @@ def _build_payload(report, audit):
         },
     }, ensure_ascii=False)
 
+
+def _rpc_call(method, params):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": method,
+        "params": params,
+    }
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.post(ARKIV_RPC, json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        if "error" in data:
+            raise Exception(f"RPC error: {data['error']}")
+        return data["result"]
+
+
+def _sign_and_send_tx(tx_dict):
+    from eth_account import Account
+    acct = Account.from_key(ARKIV_PRIVATE_KEY)
+    signed = acct.sign_transaction(tx_dict)
+    raw_hex = signed.raw_transaction.hex()
+    if not raw_hex.startswith("0x"):
+        raw_hex = "0x" + raw_hex
+    tx_hash = _rpc_call("eth_sendRawTransaction", [raw_hex])
+    return tx_hash
+
+
 def store_report(report, audit, reporte_id=None):
     if not reporte_id:
         reporte_id = report.get("reporte_id") or f"RP-{int(time.time())}"
@@ -73,54 +102,72 @@ def store_report(report, audit, reporte_id=None):
                 "simulated": True,
             })
         else:
-            from web3 import Web3
             from eth_account import Account
 
-            w3 = Web3(Web3.HTTPProvider(ARKIV_RPC))
-            account = Account.from_key(ARKIV_PRIVATE_KEY)
+            acct = Account.from_key(ARKIV_PRIVATE_KEY)
+            nonce = int(_rpc_call("eth_getTransactionCount", [acct.address, "latest"]), 16)
+            gas_price = int(_rpc_call("eth_gasPrice", []), 16)
 
             tx = {
                 "to": ARKIV_ADDRESS,
-                "from": account.address,
+                "from": acct.address,
                 "value": 0,
-                "data": w3.to_bytes(text=payload_str).hex(),
+                "data": "0x" + payload_str.encode().hex(),
                 "chainId": CHAIN_ID,
+                "nonce": nonce,
+                "gasPrice": gas_price,
+                "gas": 2100000,
             }
 
-            gas = w3.eth.estimate_gas(tx)
-            tx["gas"] = gas
-            tx["gasPrice"] = w3.eth.gas_price
-            nonce = w3.eth.get_transaction_count(account.address)
-            tx["nonce"] = nonce
+            tx_hash_raw = _sign_and_send_tx(tx)
+            logger.info("ARKIV: enviado — tx=%s", tx_hash_raw)
 
-            signed = account.sign_transaction(tx)
-            tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-            receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+            receipt = _rpc_call("eth_getTransactionReceipt", [tx_hash_raw])
+            retries = 0
+            while receipt is None and retries < 10:
+                time.sleep(2)
+                receipt = _rpc_call("eth_getTransactionReceipt", [tx_hash_raw])
+                retries += 1
 
-            entity_key = f"0x{receipt['logs'][0]['data'].hex()}" if receipt.get("logs") else tx_hash.hex()
-            logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash.hex())
+            tx_hash_hex = tx_hash_raw if tx_hash_raw.startswith("0x") else "0x" + tx_hash_raw
+            entity_key = f"0x{receipt['logs'][0]['data'][2:]}" if receipt and receipt.get("logs") and receipt["logs"][0].get("data") else tx_hash_hex
+
+            logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash_hex)
 
             result.update({
                 "entity_key": entity_key,
-                "tx_hash": tx_hash.hex(),
+                "tx_hash": tx_hash_hex,
                 "stored": True,
                 "simulated": False,
             })
 
     except Exception as e:
         logger.error("ARKIV: error al almacenar — %s", str(e))
-        result.update({
-            "entity_key": "0xERR",
-            "tx_hash": "0xERR",
-            "stored": False,
-            "simulated": False,
-            "error": str(e),
-        })
+        err_msg = str(e)
+        if "non-golembase" in err_msg:
+            logger.info("ARKIV: red requiere GolemBase, usando simulación")
+            meta = report.get("metadata_origen", {})
+            entity_key = f"0xSIM_{meta.get('chofer_id', 'unknown')}_{int(time.time())}"
+            result.update({
+                "entity_key": entity_key,
+                "tx_hash": "0xSIM",
+                "stored": False,
+                "simulated": True,
+            })
+        else:
+            result.update({
+                "entity_key": "0xERR",
+                "tx_hash": "0xERR",
+                "stored": False,
+                "simulated": False,
+                "error": str(e),
+            })
 
-    audit["_arkiv_tx_hash"] = result.get("tx_hash", "")
+    audit["arkiv_tx_hash"] = result.get("tx_hash", "")
     db_save_report(reporte_id, report, audit)
     result["reporte_id"] = reporte_id
     return result
+
 
 def query_reports(tipo=None, limit=50, verification=None):
     return db_list_reports(limit=limit, tipo=tipo, verification=verification)

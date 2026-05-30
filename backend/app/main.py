@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report, query_reports
 from app.services.auth import authenticate, create_token, verify_token, register_driver, get_driver_by_id
-from app.services.db import verify_report as db_verify_report
+from app.services.db import verify_report as db_verify_report, list_reports as db_list_reports
 from app.services.ai_service import analizar_reporte
 
 app = FastAPI(title="RutaSegura API", version="0.1.0")
@@ -67,6 +67,7 @@ class AuditResult(BaseModel):
     distancia_ruta_km: Optional[float] = None
     direccion: Optional[str] = None
     groq_analisis: Optional[dict] = None
+    arkiv_tx_hash: Optional[str] = None
 
 class ArkivResult(BaseModel):
     entity_key: str
@@ -153,6 +154,27 @@ def list_reports(tipo: Optional[str] = None, verification: Optional[str] = None,
 def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
     if req.status not in ("verified", "rejected", "pending"):
         raise HTTPException(status_code=400, detail="Estado inválido. Usar 'verified', 'rejected' o 'pending'")
+
+    reports = db_list_reports(limit=1)
+    existing = next((r for r in reports if r["reporte_id"] == reporte_id), None)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+
+    if req.status == "verified":
+        audit_data = existing["audit"]
+        tx_hash = audit_data.get("arkiv_tx_hash", "")
+        if not tx_hash or tx_hash in ("0xSIM", "0xERR", ""):
+            logger.info("VERIFY: reporte %s no tiene tx_hash válido, enviando a Arkiv...", reporte_id)
+            payload = existing["payload"]
+            report = {
+                "reporte_id": reporte_id,
+                "metadata_origen": payload.get("metadata_origen", {}),
+                "geolocalizacion_reportada": payload.get("geolocalizacion_reportada", {}),
+                "datos_evento": payload.get("datos_evento", {}),
+            }
+            arkiv_result = store_report(report, audit_data, reporte_id=reporte_id)
+            logger.info("VERIFY: Arkiv result — tx_hash=%s stored=%s", arkiv_result.get("tx_hash"), arkiv_result.get("stored"))
+
     ok = db_verify_report(reporte_id, req.status)
     if not ok:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
