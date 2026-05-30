@@ -30,7 +30,7 @@ La **Ruta Nacional 51 (Salta, Argentina)** es el corredor logístico principal d
 | Recurso | URL |
 |---------|-----|
 | App en producción | [https://arikiv-production.up.railway.app](https://arikiv-production.up.railway.app) |
-| Video demo | _Pendiente_ |
+| Video demo | [Ver demo](https://drive.google.com/file/d/1lBmCD0AsNji8MDTEIk60wB_41N-irY12/view?usp=drive_link) |
 
 ---
 
