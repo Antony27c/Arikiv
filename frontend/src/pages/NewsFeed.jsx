@@ -258,15 +258,6 @@ export default function NewsFeed({ synced, pending }) {
         <p className="pw-page-subtitle">Auditoria Vial Inmutable — RN 51, Salta</p>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-        <button
-          onClick={() => setShowArkivView((v) => !v)}
-          className={showArkivView ? "pw-arkiv-toggle pw-arkiv-toggle-active" : "pw-arkiv-toggle"}
-        >
-          {showArkivView ? "Ocultar vista ARKIV" : "Ver desde ARKIV"}
-        </button>
-      </div>
-
       {all.length === 0 && pending.length === 0 && (
         <div className="pw-empty">
           <p className="pw-empty-title">Sin reportes</p>
@@ -323,6 +314,15 @@ export default function NewsFeed({ synced, pending }) {
           )}
         </>
       )}
+
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, marginTop: 24 }}>
+        <button
+          onClick={() => setShowArkivView((v) => !v)}
+          className={showArkivView ? "pw-arkiv-toggle pw-arkiv-toggle-active" : "pw-arkiv-toggle"}
+        >
+          {showArkivView ? "Ocultar vista ARKIV" : "Ver desde ARKIV"}
+        </button>
+      </div>
 
       {showArkivView && (
         <div className="pw-section">
