@@ -133,9 +133,12 @@ def store_report(report, audit, reporte_id=None):
             "simulated": True,
         }
     else:
+        pk = ARKIV_PRIVATE_KEY
+        if not pk.startswith("0x"):
+            pk = "0x" + pk
         try:
             entity_key, tx_hash = _call_arkiv_writer(
-                ARKIV_PRIVATE_KEY, payload_str, expires_in, attributes
+                pk, payload_str, expires_in, attributes
             )
             logger.info("ARKIV: almacenado — entity_key=%s tx=%s", entity_key, tx_hash)
             result = {
