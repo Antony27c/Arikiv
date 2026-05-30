@@ -753,6 +753,244 @@ select.pw-input {
 .pw-login-divider::before { left: 0; }
 .pw-login-divider::after { right: 0; }
 
+/* ─── MOBILE REPORT FORM (NuevoReporteMobile) ─── */
+
+.pw-mrf {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Stepper compacto */
+.pw-mrf-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  margin-bottom: 16px;
+}
+
+.pw-mrf-step {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-data);
+  border: 1px solid var(--dorado-suave);
+  color: var(--texto-sec);
+  background: none;
+}
+
+.pw-mrf-step-active {
+  background: var(--dorado);
+  border-color: var(--dorado);
+  color: var(--bordo);
+}
+
+.pw-mrf-step-done {
+  background: var(--bordo);
+  border-color: var(--bordo);
+  color: var(--superficie);
+}
+
+.pw-mrf-step-line {
+  width: 24px;
+  height: 1px;
+  background: var(--dorado-suave);
+  margin: 0 4px;
+}
+
+.pw-mrf-step-line-done {
+  background: var(--bordo);
+}
+
+/* Section */
+.pw-mrf-section {
+  margin-bottom: 4px;
+}
+
+.pw-mrf-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--bordo);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.pw-mrf-row {
+  display: flex;
+  gap: 12px;
+}
+
+.pw-mrf-divider {
+  height: 1px;
+  background: var(--dorado-suave);
+  margin: 20px 0;
+}
+
+/* GPS button */
+.pw-mrf-gps {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--bordo);
+  background: none;
+  border: 1px solid var(--bordo);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pw-mrf-gps:hover { background: var(--bordo); color: var(--dorado-suave); }
+
+/* Map */
+.pw-mrf-map {
+  width: 100%;
+  height: 200px;
+  border: 1px solid var(--dorado-suave);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* Chips 2-column grid */
+.pw-mrf-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pw-mrf-chip {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--texto-sec);
+  background: none;
+  border: 1px solid var(--dorado-suave);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.pw-mrf-chip:hover { border-color: var(--bordo); color: var(--bordo); }
+
+.pw-mrf-chip-active {
+  background: var(--bordo);
+  border-color: var(--bordo);
+  color: var(--dorado-suave);
+  font-weight: 500;
+}
+
+/* Priority inline */
+.pw-mrf-priority {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+}
+
+.pw-mrf-prio {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--texto-sec);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pw-mrf-prio:hover { color: var(--bordo); }
+
+.pw-mrf-prio-active {
+  color: var(--bordo);
+  font-weight: 500;
+  border-bottom-color: var(--dorado);
+}
+
+/* Summary */
+.pw-mrf-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(232,213,163,0.12);
+  border: 1px solid var(--dorado-suave);
+}
+
+.pw-mrf-s-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pw-mrf-s-label {
+  font-size: 10px;
+  color: var(--texto-sec);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pw-mrf-s-value {
+  font-size: 13px;
+  color: var(--bordo);
+  font-weight: 500;
+}
+
+/* Cancel button */
+.pw-mrf-cancel {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--bordo);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Submit button */
+.pw-mrf-submit {
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dorado-suave);
+  background: var(--bordo);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pw-mrf-submit:hover { background: var(--bordo-oscuro); }
+.pw-mrf-submit:disabled { opacity: 0.3; cursor: default; }
+
+/* Mountains at bottom */
+.pw-mrf-mountains {
+  height: 120px;
+  margin-top: 20px;
+  pointer-events: none;
+}
+
 /* ─── MOUNTAINS ─── */
 
 .pw-mountains {
