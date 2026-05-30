@@ -3,9 +3,15 @@ import AutocompleteInput from "./AutocompleteInput";
 import LocationPicker from "./LocationPicker";
 import "leaflet/dist/leaflet.css";
 
-const IncidentTypes = [
+const ChipsMain = [
   "Derrumbe", "Neblina", "Lluvia", "Viento",
   "Accidente", "Otro",
+];
+
+const ChipsExtra = [
+  "Bache", "Animal suelto", "Corte de ruta",
+  "Senializacion danada", "Vehiculo averiado",
+  "Incendio", "Inundacion", "Desprendimiento",
 ];
 
 const Empresas = [
@@ -41,6 +47,8 @@ export default function NuevoReporteMobile({ onSave, user }) {
   });
   const [photo, setPhoto] = useState(null);
   const [geoStatus, setGeoStatus] = useState("");
+  const [showExtra, setShowExtra] = useState(false);
+  const [customTipo, setCustomTipo] = useState("");
   const [activeStep, setActiveStep] = useState(0);
   const fileRef = useRef();
   const sectionRefs = [useRef(), useRef(), useRef(), useRef()];
@@ -122,7 +130,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
       datos_evento: { tipo_incidente: form.tipo_incidente, descripcion_chofer: form.descripcion_chofer, imagen_hash_sha256: imagen_hash || null, fotos: photo ? [{ filename: "capture.jpg", data: photo }] : [] },
     });
         setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
-    setPhoto(null);
+    setPhoto(null); setShowExtra(false); setCustomTipo("");
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -182,14 +190,34 @@ export default function NuevoReporteMobile({ onSave, user }) {
       <div ref={sectionRefs[2]} className="pw-mrf-section">
         <h3 className="pw-mrf-label">Tipo de incidente</h3>
         <div className="pw-mrf-chips">
-          {IncidentTypes.map(t => (
+          {ChipsMain.map(t => (
             <button key={t} type="button"
-              className={`pw-mrf-chip ${form.tipo_incidente === t ? "pw-mrf-chip-active" : ""}`}
-              onClick={() => setForm(prev => ({ ...prev, tipo_incidente: t }))}>
+              className={`pw-mrf-chip ${form.tipo_incidente === t ? "pw-mrf-chip-active" : ""} ${t === "Otro" && showExtra ? "pw-mrf-chip-active" : ""}`}
+              onClick={() => {
+                if (t === "Otro") { setShowExtra(!showExtra); setForm(prev => ({ ...prev, tipo_incidente: "" })); setCustomTipo(""); }
+                else { setShowExtra(false); setForm(prev => ({ ...prev, tipo_incidente: t })); setCustomTipo(""); }
+              }}>
               {t}
             </button>
           ))}
         </div>
+
+        {showExtra && (
+          <div style={{ marginBottom: 16 }}>
+            <div className="pw-mrf-chips">
+              {ChipsExtra.map(t => (
+                <button key={t} type="button"
+                  className={`pw-mrf-chip ${form.tipo_incidente === t ? "pw-mrf-chip-active" : ""}`}
+                  onClick={() => { setForm(prev => ({ ...prev, tipo_incidente: t })); setCustomTipo(""); }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <input className="pw-input" placeholder="O escribir otro tipo de emergencia..."
+              value={customTipo} onChange={e => { setCustomTipo(e.target.value); setForm(prev => ({ ...prev, tipo_incidente: e.target.value })); }}
+              style={{ marginTop: 8 }} />
+          </div>
+        )}
 
         <textarea className="pw-input" placeholder="Describi el incidente..."
           value={form.descripcion_chofer} onChange={setF("descripcion_chofer")} rows={4} />
@@ -238,8 +266,8 @@ export default function NuevoReporteMobile({ onSave, user }) {
 
       {/* Botones */}
       <button type="button" onClick={() => {
-    setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
-        setPhoto(null);
+        setForm({ chofer_id: "", empresa_minera: "", patente_camion: "", latitud: "", longitud: "", kilometro: "", tipo_incidente: "", descripcion_chofer: "" });
+        setPhoto(null); setShowExtra(false); setCustomTipo("");
       }} className="pw-mrf-cancel">Cancelar</button>
       <button type="submit" className="pw-mrf-submit"
         disabled={!form.chofer_id || !form.latitud || !form.longitud || !form.tipo_incidente}>
