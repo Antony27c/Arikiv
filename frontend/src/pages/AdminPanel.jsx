@@ -120,6 +120,32 @@ export default function AdminPanel() {
               <div className="pw-ai-text">{audit.analisis_coherencia}</div>
             )}
 
+            {audit.groq_analisis && audit.groq_analisis.tipo && (
+              <div style={{ fontSize: 12, marginTop: 8, padding: "8px 10px", background: "rgba(201,168,76,0.08)", borderLeft: "2px solid var(--dorado)", borderRadius: 2 }}>
+                <strong style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--texto-sec)" }}>Análisis Groq</strong>
+                <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
+                  <span>Tipo: <strong>{audit.groq_analisis.tipo}</strong></span>
+                  <span>Confianza: <strong>{(audit.groq_analisis.confianza * 100).toFixed(0)}%</strong></span>
+                  <span style={{ color: audit.groq_analisis.es_fraude ? "var(--rojo)" : "var(--verde)" }}>
+                    {audit.groq_analisis.es_fraude ? "⚠ Fraude" : "✓ Válido"}
+                  </span>
+                  <span style={{ color: audit.groq_analisis.en_zona ? "var(--verde)" : "var(--rojo)" }}>
+                    {audit.groq_analisis.en_zona ? "✓ En zona" : "✗ Fuera de zona"}
+                  </span>
+                </div>
+                {audit.groq_analisis.resumen && (
+                  <div style={{ fontSize: 12, color: "var(--texto)", marginTop: 4, fontStyle: "italic" }}>
+                    {audit.groq_analisis.resumen}
+                  </div>
+                )}
+                {audit.groq_analisis.razon_rechazo && (
+                  <div style={{ fontSize: 11, color: "var(--rojo)", marginTop: 2 }}>
+                    {audit.groq_analisis.razon_rechazo}
+                  </div>
+                )}
+              </div>
+            )}
+
             {(!vStatus || vStatus === "pending") ? (
               <div className="pw-card-actions">
                 <button onClick={() => handleVerify(r.reporte_id, "verified")} className="pw-btn-action pw-btn-verify">

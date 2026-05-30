@@ -39,11 +39,11 @@ export async function submitReport(data) {
   return res.json();
 }
 
-export async function analizarReporte(reporte) {
-  const res = await fetch(`${BASE}/api/analizar-reporte`, {
+export async function analizarReporte(descripcion, latitud = 0, longitud = 0) {
+  const res = await fetch(`${BASE}/api/reportes/analizar`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ reporte }),
+    body: JSON.stringify({ descripcion, latitud, longitud }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

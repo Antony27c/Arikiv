@@ -66,6 +66,7 @@ class AuditResult(BaseModel):
     flags: list[str]
     distancia_ruta_km: Optional[float] = None
     direccion: Optional[str] = None
+    groq_analisis: Optional[dict] = None
 
 class ArkivResult(BaseModel):
     entity_key: str
@@ -101,12 +102,10 @@ class RegisterRequest(BaseModel):
 class VerifyRequest(BaseModel):
     status: str
 
-class AnalizarRequest(BaseModel):
-    reporte: str
-
-class AnalizarResponse(BaseModel):
-    error: Optional[str] = None
-    analisis: Optional[dict] = None
+class AnalizarReporteRequest(BaseModel):
+    descripcion: str
+    latitud: float = 0.0
+    longitud: float = 0.0
 
 def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
@@ -163,12 +162,12 @@ def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
 def health():
     return {"status": "ok", "service": "rutasegura-api"}
 
-@app.post("/api/analizar-reporte", response_model=AnalizarResponse)
-def analizar_reporte_endpoint(req: AnalizarRequest):
-    if not req.reporte.strip():
-        raise HTTPException(status_code=400, detail="El campo 'reporte' no puede estar vacío")
-    result = analizar_reporte(req.reporte)
-    return AnalizarResponse(**result)
+@app.post("/api/reportes/analizar")
+def analizar_reporte_endpoint(req: AnalizarReporteRequest):
+    if not req.descripcion.strip():
+        raise HTTPException(status_code=400, detail="El campo 'descripcion' no puede estar vacío")
+    result = analizar_reporte(req.descripcion, req.latitud, req.longitud)
+    return result
 
 @app.get("/")
 def index():
@@ -187,6 +186,11 @@ def submit_report(report: Report):
     reporte_id = report.reporte_id or f"RP-{int(datetime.now().timestamp())}"
     data = report.model_dump()
     audit = audit_report(data)
+
+    geo = report.geolocalizacion_reportada.coordenadas
+    desc = report.datos_evento.descripcion_chofer
+    groq_result = analizar_reporte(desc, geo.latitud, geo.longitud)
+    audit["groq_analisis"] = groq_result
 
     arkiv = store_report(data, audit, reporte_id=reporte_id)
 

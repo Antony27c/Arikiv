@@ -62,10 +62,10 @@ export default function NewsFeed({ synced, pending }) {
     setExpanded(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   }
 
-  async function handleGroqAnalysis(id, reporte) {
+  async function handleGroqAnalysis(id, descripcion, latitud, longitud) {
     setGroqLoading(prev => ({ ...prev, [id]: true }));
     try {
-      const result = await analizarReporte(reporte);
+      const result = await analizarReporte(descripcion, latitud, longitud);
       setGroqAnalysis(prev => ({ ...prev, [id]: result }));
     } catch {
       setGroqAnalysis(prev => ({ ...prev, [id]: { error: "Error al conectar con Groq" } }));
@@ -142,17 +142,19 @@ export default function NewsFeed({ synced, pending }) {
             </button>
             <button
               className="pw-btn-masinfo"
-              onClick={(e) => { e.stopPropagation(); handleGroqAnalysis(s._id, `${evento.tipo_incidente || ""} — ${v?.resumen_tecnico_ia || evento.descripcion_chofer || ""}`); }}
+              onClick={(e) => { e.stopPropagation(); handleGroqAnalysis(s._id, evento.descripcion_chofer || v?.resumen_tecnico_ia || "", coords?.latitud || 0, coords?.longitud || 0); }}
               disabled={groqLoading[s._id]}
             >
               {groqLoading[s._id] ? "Analizando..." : "Groq IA"}
             </button>
           </div>
-          {groqAnalysis[s._id] && groqAnalysis[s._id].analisis && (
+          {groqAnalysis[s._id] && groqAnalysis[s._id].tipo && (
             <div style={{ fontSize: 11, color: "var(--texto-sec)", marginTop: 4, padding: "6px 8px", background: "rgba(201,168,76,0.08)", borderRadius: 2 }}>
-              <strong>Groq:</strong> {groqAnalysis[s._id].analisis.clasificacion} &middot; Score: {groqAnalysis[s._id].analisis.score_confianza}
+              <strong>Groq:</strong> {groqAnalysis[s._id].tipo} &middot; Confianza: {(groqAnalysis[s._id].confianza * 100).toFixed(0)}%
+              {groqAnalysis[s._id].es_fraude && <span style={{ color: "var(--rojo)", marginLeft: 4 }}>⚠ Fraude</span>}
+              {!groqAnalysis[s._id].en_zona && <span style={{ color: "var(--rojo)", marginLeft: 4 }}>✗ Fuera de zona</span>}
               <br />
-              {groqAnalysis[s._id].analisis.resumen}
+              {groqAnalysis[s._id].resumen}
             </div>
           )}
           {groqAnalysis[s._id] && groqAnalysis[s._id].error && (
