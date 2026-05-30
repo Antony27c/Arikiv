@@ -362,10 +362,10 @@ La app detecta cambios de conectividad con `navigator.onLine`. Cuando el chofer 
 
 | Nombre | GitHub |
 |--------|--------|
-| Eduardo Batule | @ |
-| Ariel Lamas | @ |
-| Gildo Diaz | @ |
-| Antonio Chocobar | @ |
+| Eduardo Batule | [@eduardobatule](https://github.com/eduardobatule) |
+| Ariel Lamas | [@revirado](https://github.com/revirado) |
+| Gildo Diaz | [@gildoadiaz-tech](https://github.com/gildoadiaz-tech) |
+| Antonio Chocobar | [@Antony27c](https://github.com/Antony27c) |
 
 ---
 
