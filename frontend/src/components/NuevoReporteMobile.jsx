@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import AutocompleteInput from "./AutocompleteInput";
 import LocationPicker from "./LocationPicker";
 import "leaflet/dist/leaflet.css";
@@ -22,8 +22,6 @@ const Empresas = [
 const KmsSugeridos = [
   "22", "32", "45", "53", "65", "78", "92", "106", "115", "128",
 ];
-
-const STEPS = ["Identificacion", "Ubicacion", "Incidente", "Confirmar"];
 
 function saveHistory(key, value) {
   if (!value) return;
@@ -49,23 +47,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
   const [geoStatus, setGeoStatus] = useState("");
   const [showExtra, setShowExtra] = useState(false);
   const [customTipo, setCustomTipo] = useState("");
-  const [activeStep, setActiveStep] = useState(0);
   const fileRef = useRef();
-  const sectionRefs = [useRef(), useRef(), useRef(), useRef()];
-
-  useEffect(() => {
-    const obs = sectionRefs.map((ref, i) => {
-      const el = ref.current;
-      if (!el) return null;
-      const observer = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveStep(i); },
-        { rootMargin: "-30% 0px -50% 0px" }
-      );
-      observer.observe(el);
-      return observer;
-    });
-    return () => obs.forEach(o => o?.disconnect());
-  }, []);
 
   function setF(field) {
     return (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -136,20 +118,8 @@ export default function NuevoReporteMobile({ onSave, user }) {
 
   return (
     <form onSubmit={handleSubmit} className="pw-mrf">
-      {/* Stepper compacto */}
-      <div className="pw-mrf-stepper">
-        {STEPS.map((label, i) => (
-          <span key={label} style={{ display: "flex", alignItems: "center" }}>
-            <span className={`pw-mrf-step ${activeStep === i ? "pw-mrf-step-active" : ""} ${i < activeStep ? "pw-mrf-step-done" : ""}`}>
-              {i + 1}
-            </span>
-            {i < STEPS.length - 1 && <span className={`pw-mrf-step-line ${i < activeStep ? "pw-mrf-step-line-done" : ""}`} />}
-          </span>
-        ))}
-      </div>
-
       {/* Seccion 1 - Identificacion */}
-      <div ref={sectionRefs[0]} className="pw-mrf-section">
+      <div className="pw-mrf-section">
         <h3 className="pw-mrf-label">Identificacion</h3>
         <AutocompleteInput placeholder="Nombre del chofer" value={form.chofer_id}
           onChange={setF("chofer_id")} suggestions={[]} historyKey="chofer" required />
@@ -163,7 +133,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
       </div>
 
       {/* Seccion 2 - Ubicacion */}
-      <div ref={sectionRefs[1]} className="pw-mrf-section">
+      <div className="pw-mrf-section">
         <h3 className="pw-mrf-label">Ubicacion</h3>
         <div className="pw-mrf-row" style={{ gap: 8 }}>
           <input className="pw-input" placeholder="Latitud" value={form.latitud}
@@ -187,7 +157,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
       </div>
 
       {/* Seccion 3 - Tipo de incidente */}
-      <div ref={sectionRefs[2]} className="pw-mrf-section">
+      <div className="pw-mrf-section">
         <h3 className="pw-mrf-label">Tipo de incidente</h3>
         <div className="pw-mrf-chips">
           {ChipsMain.map(t => (
@@ -228,7 +198,7 @@ export default function NuevoReporteMobile({ onSave, user }) {
       </div>
 
       {/* Seccion 4 - Confirmar */}
-      <div ref={sectionRefs[3]} className="pw-mrf-section">
+      <div className="pw-mrf-section">
         <h3 className="pw-mrf-label">Confirmar</h3>
         <div className="pw-mrf-summary">
           <div className="pw-mrf-s-item">
