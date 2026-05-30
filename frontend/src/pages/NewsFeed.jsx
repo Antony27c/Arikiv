@@ -186,6 +186,28 @@ export default function NewsFeed({ synced, pending }) {
           </div>
         )}
 
+        {(() => {
+          const txHash = a?.entity_key || a?.tx_hash || v?.arkiv_tx_hash || "";
+          if (!txHash || txHash === "0xERR") return null;
+          const isSim = txHash === "0xSIM" || txHash.startsWith("0xSIM") || a?.simulated;
+          if (isSim) {
+            return (
+              <div style={{ fontSize: 11, color: "var(--texto-sec)", textAlign: "right", marginTop: 6, fontStyle: "italic" }}>
+                Modo simulación — sin registro en blockchain
+              </div>
+            );
+          }
+          return (
+            <div style={{ fontSize: 11, color: "var(--bordo)", textAlign: "right", marginTop: 6 }}>
+              <a href={`https://braga.hoodi.arkiv.network/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                style={{ color: "var(--bordo)", textDecoration: "none" }}
+                onClick={(e) => e.stopPropagation()}>
+                Ver transacción en Arkiv →
+              </a>
+            </div>
+          );
+        })()}
+
         {isOpen && (
           <div style={{ marginTop: 10 }}>
             <div className="pw-card-desc">{v?.resumen_tecnico_ia || evento.descripcion_chofer || "Sin descripción"}</div>
