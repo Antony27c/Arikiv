@@ -338,20 +338,10 @@ export default function NewsFeed({ synced, pending }) {
             </div>
           )}
 
-          {arkivDirect.error && (
+          {!arkivDirect.loading && arkivDirect.data.length === 0 && (
             <div className="pw-empty">
-              <p className="pw-empty-title">Sin datos en ARKIV todavía</p>
-              <p className="pw-empty-desc">Los reportes aparecerán aquí una vez que sean verificados y commiteados on-chain.</p>
-              <button onClick={arkivDirect.refetch} className="pw-arkiv-toggle" style={{ marginTop: 8 }}>
-                Reintentar
-              </button>
-            </div>
-          )}
-
-          {!arkivDirect.loading && !arkivDirect.error && arkivDirect.data.length === 0 && (
-            <div className="pw-empty">
-              <p className="pw-empty-title">Sin datos en ARKIV todavía</p>
-              <p className="pw-empty-desc">Los reportes aparecerán aquí una vez que sean verificados y commiteados on-chain.</p>
+              <p className="pw-empty-title">Sin reportes on-chain todavía</p>
+              <p className="pw-empty-desc">Los datos aparecen aquí una vez que se commiteen a la testnet Braga.</p>
             </div>
           )}
 

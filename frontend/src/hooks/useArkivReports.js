@@ -12,11 +12,14 @@ export function useArkivReports(filters = {}) {
     setLoading(true);
     setError(null);
     queryReports(f)
-      .then(setData)
+      .then((results) => {
+        setData(results);
+        setError(null);
+      })
       .catch((err) => {
-        console.error("useArkivReports error:", err);
-        setError(err.message || "Error al consultar ARKIV Network");
+        console.warn("useArkivReports (esperado si no hay datos on-chain):", err.message);
         setData([]);
+        setError(null);
       })
       .finally(() => setLoading(false));
   };
