@@ -18,7 +18,8 @@ export async function queryReports(filters = {}) {
   let query = publicClient
     .buildQuery()
     .where(eq(PROJECT_ATTRIBUTE.key, PROJECT_ATTRIBUTE.value))
-    .withPayload(true);
+    .withPayload(true)
+    .limit(limit);
 
   if (tipo_incidente) {
     query = query.where(eq("datos_evento.tipo_incidente", tipo_incidente));
@@ -28,10 +29,11 @@ export async function queryReports(filters = {}) {
     query = query.where(eq("validacion_ia.clasificacion_urgencia_ia", urgencia));
   }
 
-  const { entities } = await query.fetch();
+  const result = await query.fetch();
+  const entities = result.entities || [];
 
   return entities.map((entity) => {
     const payload = entity.toJson();
-    return { key: entity.key, payload, entity };
+    return { key: entity.key, payload };
   });
 }
