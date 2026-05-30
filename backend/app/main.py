@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 from app.services.ai_audit import audit_report
 from app.services.arkiv import store_report, query_reports
 from app.services.auth import authenticate, create_token, verify_token, register_driver, get_driver_by_id
-from app.services.db import verify_report as db_verify_report, list_reports as db_list_reports
+from app.services.db import verify_report as db_verify_report, list_reports as db_list_reports, update_report_audit as db_update_report_audit
 from app.services.ai_service import analizar_reporte
 
 app = FastAPI(title="RutaSegura API", version="0.1.0")
@@ -174,6 +174,7 @@ def verify_report_endpoint(reporte_id: str, req: VerifyRequest):
             }
             arkiv_result = store_report(report, audit_data, reporte_id=reporte_id)
             logger.info("VERIFY: Arkiv result — tx_hash=%s stored=%s", arkiv_result.get("tx_hash"), arkiv_result.get("stored"))
+            db_update_report_audit(reporte_id, audit_data)
 
     ok = db_verify_report(reporte_id, req.status)
     if not ok:

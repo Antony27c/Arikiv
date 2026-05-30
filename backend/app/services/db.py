@@ -51,6 +51,18 @@ def verify_report(reporte_id, status):
     finally:
         conn.close()
 
+def update_report_audit(reporte_id, audit):
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            "UPDATE reports SET audit = ? WHERE reporte_id = ?",
+            (json.dumps(audit, ensure_ascii=False), reporte_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
 def list_reports(limit=50, tipo=None, verification=None):
     conn = _get_conn()
     try:
